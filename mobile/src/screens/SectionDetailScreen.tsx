@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import ErrorState from '../components/ErrorState';
@@ -18,8 +19,11 @@ export default function SectionDetailScreen({ route }: NativeStackScreenProps<Ap
   const [notesText, setNotesText] = useState(section?.notes_text ?? '');
   const [isPopulated, setIsPopulated] = useState(section?.is_populated ?? false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
 
   async function handleSave() {
     if (!activePacket || !section) {
@@ -38,12 +42,45 @@ export default function SectionDetailScreen({ route }: NativeStackScreenProps<Ap
       packetStore.updateSection(section.section_key, {
         notes_text: updated.notes_text,
         is_populated: updated.is_populated,
+        document_count: updated.document_count,
       });
-      setSaveSuccess('Section saved.')
+      setSaveSuccess('Section saved.');
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Unable to save this section right now.');
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleSelectDocument() {
+    if (!activePacket || !section) {
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+    setUploadSuccess(null);
+
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ multiple: false, copyToCacheDirectory: true });
+      if (result.canceled || result.assets.length === 0) {
+        setIsUploading(false);
+        return;
+      }
+
+      const file = result.assets[0];
+      await packetService.createUpload(activePacket.id, {
+        section_key: section.section_key,
+        filename: file.name,
+        content_type: file.mimeType ?? 'application/octet-stream',
+        source: 'upload',
+      });
+      packetStore.incrementSectionDocumentCount(section.section_key);
+      setUploadSuccess(`Upload queued for ${file.name}.`);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Unable to queue this upload right now.');
+    } finally {
+      setIsUploading(false);
     }
   }
 
@@ -60,7 +97,7 @@ export default function SectionDetailScreen({ route }: NativeStackScreenProps<Ap
     <ScrollView contentContainerStyle={styles.container}>
       <ProgressBanner
         title={section.title}
-        message={`Edit section notes and completion state for packet ${activePacket.id.slice(0, 8)}.`}
+        message={`Edit section notes, completion state, and upload supporting files for packet ${activePacket.id.slice(0, 8)}.`}
       />
 
       <View style={styles.panel}>
@@ -69,6 +106,7 @@ export default function SectionDetailScreen({ route }: NativeStackScreenProps<Ap
           <Text style={styles.toggleText}>{isPopulated ? 'Marked complete' : 'Not started'}</Text>
           <Switch value={isPopulated} onValueChange={setIsPopulated} />
         </View>
+        <Text style={styles.metaText}>Documents queued: {section.document_count}</Text>
       </View>
 
       <View style={styles.panel}>
@@ -87,9 +125,16 @@ export default function SectionDetailScreen({ route }: NativeStackScreenProps<Ap
         <Text style={styles.primaryButtonText}>{isSaving ? 'Saving…' : 'Save Section'}</Text>
       </Pressable>
 
+      <Pressable style={[styles.secondaryButton, isUploading && styles.primaryButtonDisabled]} onPress={handleSelectDocument} disabled={isUploading}>
+        <Text style={styles.secondaryButtonText}>{isUploading ? 'Selecting…' : 'Select Document'}</Text>
+      </Pressable>
+
       {isSaving ? <LoadingState label="Saving section to the backend…" /> : null}
+      {isUploading ? <LoadingState label="Selecting document and creating upload…" /> : null}
       {saveError ? <ErrorState message={saveError} /> : null}
+      {uploadError ? <ErrorState message={uploadError} /> : null}
       {saveSuccess ? <Text style={styles.successText}>{saveSuccess}</Text> : null}
+      {uploadSuccess ? <Text style={styles.successText}>{uploadSuccess}</Text> : null}
     </ScrollView>
   );
 }
@@ -103,9 +148,12 @@ const styles = StyleSheet.create({
   label: { fontSize: 16, fontWeight: '700', color: '#111827' },
   toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   toggleText: { color: '#111827' },
+  metaText: { color: '#4b5563' },
   notesInput: { minHeight: 180, borderWidth: 1, borderColor: '#d1d5db', borderRadius: 12, padding: 12, backgroundColor: '#ffffff', color: '#111827' },
   primaryButton: { alignItems: 'center', paddingVertical: 14, borderRadius: 12, backgroundColor: '#111827' },
+  secondaryButton: { alignItems: 'center', paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: '#d1d5db', backgroundColor: '#ffffff' },
   primaryButtonDisabled: { opacity: 0.6 },
   primaryButtonText: { color: '#ffffff', fontWeight: '700' },
+  secondaryButtonText: { color: '#111827', fontWeight: '700' },
   successText: { color: '#166534', fontWeight: '600' },
 });

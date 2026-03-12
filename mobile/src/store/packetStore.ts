@@ -16,14 +16,14 @@ export function getPacketCompletionSummary(sections: PacketSectionState[]) {
 }
 
 const DEFAULT_PACKET_SECTIONS: PacketSectionState[] = [
-  { section_key: 'photos', title: 'Photos', is_populated: false, notes_text: null, sort_order: 1 },
-  { section_key: 'support_letters', title: 'Support Letters', is_populated: false, notes_text: null, sort_order: 2 },
-  { section_key: 'reflection_letter', title: 'Reflection Letter', is_populated: false, notes_text: null, sort_order: 3 },
-  { section_key: 'certificates_and_education', title: 'Certificates and Education', is_populated: false, notes_text: null, sort_order: 4 },
-  { section_key: 'future_employment', title: 'Future Employment', is_populated: false, notes_text: null, sort_order: 5 },
-  { section_key: 'parole_plan', title: 'Parole Plan', is_populated: false, notes_text: null, sort_order: 6 },
-  { section_key: 'court_and_case_documents', title: 'Court and Case Documents', is_populated: false, notes_text: null, sort_order: 7 },
-  { section_key: 'other_miscellaneous', title: 'Other or Miscellaneous', is_populated: false, notes_text: null, sort_order: 8 },
+  { section_key: 'photos', title: 'Photos', is_populated: false, notes_text: null, sort_order: 1, document_count: 0 },
+  { section_key: 'support_letters', title: 'Support Letters', is_populated: false, notes_text: null, sort_order: 2, document_count: 0 },
+  { section_key: 'reflection_letter', title: 'Reflection Letter', is_populated: false, notes_text: null, sort_order: 3, document_count: 0 },
+  { section_key: 'certificates_and_education', title: 'Certificates and Education', is_populated: false, notes_text: null, sort_order: 4, document_count: 0 },
+  { section_key: 'future_employment', title: 'Future Employment', is_populated: false, notes_text: null, sort_order: 5, document_count: 0 },
+  { section_key: 'parole_plan', title: 'Parole Plan', is_populated: false, notes_text: null, sort_order: 6, document_count: 0 },
+  { section_key: 'court_and_case_documents', title: 'Court and Case Documents', is_populated: false, notes_text: null, sort_order: 7, document_count: 0 },
+  { section_key: 'other_miscellaneous', title: 'Other or Miscellaneous', is_populated: false, notes_text: null, sort_order: 8, document_count: 0 },
 ];
 
 let state: PacketStoreState = {
@@ -64,6 +64,15 @@ export const packetStore = {
       ...state,
       sections: state.sections.map((section) =>
         section.section_key === sectionKey ? { ...section, ...patch } : section,
+      ),
+    });
+  },
+
+  incrementSectionDocumentCount(sectionKey: PacketSectionKey) {
+    setState({
+      ...state,
+      sections: state.sections.map((section) =>
+        section.section_key === sectionKey ? { ...section, document_count: section.document_count + 1 } : section,
       ),
     });
   },

@@ -34,6 +34,7 @@ export type PacketSectionState = {
   is_populated: boolean;
   notes_text?: string | null;
   sort_order: number;
+  document_count: number;
 };
 
 export type PacketSectionUpdateRequest = {
@@ -48,4 +49,23 @@ export type PacketSectionUpdateResponse = {
   is_populated: boolean;
   document_count: number;
   updated_at: string;
+};
+
+export type PacketUploadCreateRequest = {
+  section_key: PacketSectionKey;
+  filename: string;
+  content_type: string;
+  source: 'upload' | 'scanner';
+};
+
+export type PacketUploadCreateResponse = {
+  document_id: string;
+  packet_id: string;
+  section_key: PacketSectionKey;
+  filename: string;
+  content_type: string;
+  upload_status: 'pending' | 'uploaded' | 'failed';
+  upload_url: string;
+  storage_key: string;
+  created_at: string;
 };
