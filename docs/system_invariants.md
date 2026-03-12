@@ -126,3 +126,11 @@ If an agent is uncertain whether a change violates one of these invariants, the 
 1. stop
 2. identify the possible conflict
 3. ask for clarification before proceeding
+
+## 13. Temporary Ambiguity Rule
+
+If real-world source data is ambiguous but development must continue, the agent may implement a temporary deterministic `TEMP_RULE` only if:
+- the rule is clearly marked in code and documentation as temporary
+- the temporary rule does not invent new product scope beyond the existing docs
+- a follow-up GitHub issue is created to replace the temporary rule with the real logic
+- the temporary rule is treated as a placeholder, not a final business rule

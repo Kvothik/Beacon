@@ -16,6 +16,7 @@ This document defines the required execution order for autonomous implementation
 - After completing work for an issue, push the corresponding committed changes to GitHub before starting the next issue.
 - After completing work for a queued task or GitHub issue, update the corresponding GitHub issue/PR status and move the GitHub project/kanban card to the appropriate completion state before starting the next task.
 - If completion changes task status, update the repository docs that track execution state so completed work is reflected before starting the next task.
+- If real-world data ambiguity exists, the agent may implement a `TEMP_RULE` to keep development moving only when the rule is clearly marked in code/docs as temporary and a follow-up GitHub issue is created for the real logic.
 - If a requested change conflicts with `system_invariants.md`, stop and ask.
 
 ## 3. Required Build Order
