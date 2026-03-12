@@ -21,8 +21,8 @@ It is ordered for MVP-first delivery, keeps P0 separate from later work, and is 
 
 ### Execution State
 
-- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`, `P0-06`, `P0-07`, `P0-08`, `P0-09`
-- current: `P0-10`
+- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`, `P0-06`, `P0-07`, `P0-08`, `P0-09`, `P0-10`
+- current: `P0-11`
 
 ### P0-01. Lock documentation baseline and cross-document consistency
 
@@ -241,6 +241,9 @@ Issue shape:
 - offenders
 
 ### P0-10. Implement mobile offender search and offender selection flow
+
+Status:
+- completed
 
 Scope:
 - search form for last name + first initial, TDCJ number, or SID
