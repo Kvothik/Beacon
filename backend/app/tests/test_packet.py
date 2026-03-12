@@ -191,3 +191,45 @@ class PacketRouterTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["error"]["code"], "forbidden")
+
+    def test_patch_packet_section_updates_notes_and_population_state(self) -> None:
+        token = register_and_get_token(self.client)
+        body = create_packet(self.client, token, sid="33333333")
+
+        response = self.client.patch(
+            f"/api/v1/packets/{body['id']}/sections/reflection_letter",
+            json={"notes_text": "I take responsibility for my actions.", "is_populated": True},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        section = response.json()
+        self.assertEqual(section["section_key"], "reflection_letter")
+        self.assertEqual(section["notes_text"], "I take responsibility for my actions.")
+        self.assertTrue(section["is_populated"])
+        self.assertEqual(section["document_count"], 0)
+        self.assertIn("updated_at", section)
+
+    def test_patch_packet_section_rejects_invalid_section_key(self) -> None:
+        token = register_and_get_token(self.client)
+        body = create_packet(self.client, token, sid="44444444")
+
+        response = self.client.patch(
+            f"/api/v1/packets/{body['id']}/sections/not_a_real_section",
+            json={"notes_text": "x", "is_populated": True},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"]["code"], "validation_error")
+
+    def test_patch_packet_section_enforces_ownership(self) -> None:
+        owner_token = register_and_get_token(self.client, prefix="ownerpatch")
+        other_token = register_and_get_token(self.client, prefix="otherpatch")
+        body = create_packet(self.client, owner_token, sid="55555555")
+
+        response = self.client.patch(
+            f"/api/v1/packets/{body['id']}/sections/photos",
+            json={"notes_text": "private", "is_populated": True},
+            headers={"Authorization": f"Bearer {other_token}"},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["error"]["code"], "forbidden")

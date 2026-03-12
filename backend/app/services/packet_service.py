@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from backend.app.core.security import ApiError
 from backend.app.models.document import Document
 from backend.app.models.offender import Offender
-from backend.app.models.packet import Packet, PacketSection
+from backend.app.models.packet import SECTION_KEY_VALUES, Packet, PacketSection
 from backend.app.models.parole_board import ParoleBoardOffice
 from backend.app.models.user import User
 
@@ -124,14 +124,7 @@ def get_packet_detail(session: Session, *, current_user: User, packet_id: UUID) 
     sections = session.scalars(
         select(PacketSection).where(PacketSection.packet_id == packet.id).order_by(PacketSection.sort_order)
     ).all()
-    document_counts = {
-        section_id: count
-        for section_id, count in session.execute(
-            select(Document.packet_section_id, func.count(Document.id))
-            .where(Document.packet_id == packet.id)
-            .group_by(Document.packet_section_id)
-        ).all()
-    }
+    document_counts = _document_counts_by_section(session, packet.id)
 
     return {
         "id": str(packet.id),
@@ -155,4 +148,60 @@ def get_packet_detail(session: Session, *, current_user: User, packet_id: UUID) 
         ],
         "created_at": packet.created_at,
         "updated_at": packet.updated_at,
+    }
+
+
+def update_packet_section(
+    session: Session,
+    *,
+    current_user: User,
+    packet_id: UUID,
+    section_key: str,
+    notes_text: str | None,
+    is_populated: bool,
+) -> dict[str, Any]:
+    if section_key not in SECTION_KEY_VALUES:
+        raise ApiError(
+            400,
+            "validation_error",
+            "Request validation failed.",
+            details={"fields": ["section_key"]},
+        )
+
+    packet = session.get(Packet, packet_id)
+    if packet is None:
+        raise ApiError(404, "packet_not_found", "No packet was found for that id.")
+    if packet.user_id != current_user.id:
+        raise ApiError(403, "forbidden", "You do not have access to that packet.")
+
+    section = session.scalar(
+        select(PacketSection).where(PacketSection.packet_id == packet.id, PacketSection.section_key == section_key)
+    )
+    if section is None:
+        raise ApiError(404, "not_found", "No packet section was found for that key.")
+
+    section.notes_text = notes_text.strip() if notes_text is not None else None
+    section.is_populated = is_populated
+    session.commit()
+    session.refresh(section)
+
+    document_counts = _document_counts_by_section(session, packet.id)
+    return {
+        "section_key": section.section_key,
+        "title": section.title,
+        "notes_text": section.notes_text,
+        "is_populated": section.is_populated,
+        "document_count": int(document_counts.get(section.id, 0)),
+        "updated_at": section.updated_at,
+    }
+
+
+def _document_counts_by_section(session: Session, packet_id: UUID) -> dict[UUID, int]:
+    return {
+        section_id: count
+        for section_id, count in session.execute(
+            select(Document.packet_section_id, func.count(Document.id))
+            .where(Document.packet_id == packet_id)
+            .group_by(Document.packet_section_id)
+        ).all()
     }

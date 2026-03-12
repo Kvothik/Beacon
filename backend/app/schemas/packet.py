@@ -49,3 +49,17 @@ class PacketDetailResponse(BaseModel):
     sections: list[PacketSectionResponse]
     created_at: datetime
     updated_at: datetime
+
+
+class PacketSectionUpdateRequest(BaseModel):
+    notes_text: Optional[str] = None
+    is_populated: bool
+
+
+class PacketSectionUpdateResponse(BaseModel):
+    section_key: str
+    title: str
+    notes_text: Optional[str] = None
+    is_populated: bool
+    document_count: int
+    updated_at: datetime
