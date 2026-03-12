@@ -6,16 +6,19 @@ import ErrorState from '../components/ErrorState';
 import LoadingState from '../components/LoadingState';
 import ProgressBanner from '../components/ProgressBanner';
 import SectionCard from '../components/SectionCard';
+import type { AppStackParamList } from '../navigation/AppNavigator';
 import { authService } from '../services/authService';
 import { offenderService } from '../services/offenderService';
-import type { AppStackParamList } from '../navigation/AppNavigator';
+import { packetService } from '../services/packetService';
 import { useAuthStore } from '../store/authStore';
 import { offenderStore, useOffenderStore } from '../store/offenderStore';
+import { packetStore, usePacketStore } from '../store/packetStore';
 import type { OffenderSummary } from '../types/offender';
 
 export default function HomeScreen({ navigation }: NativeStackScreenProps<AppStackParamList, 'Home'>) {
   const { session } = useAuthStore();
   const { results, pagination, selectedOffenderSid, selectedOffenderDetail, selectedParoleBoardOffice } = useOffenderStore();
+  const { activePacket } = usePacketStore();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [lastName, setLastName] = useState('');
   const [firstNameInitial, setFirstNameInitial] = useState('');
@@ -24,9 +27,11 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [isLoadingParoleBoard, setIsLoadingParoleBoard] = useState(false);
+  const [isCreatingPacket, setIsCreatingPacket] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [paroleBoardError, setParoleBoardError] = useState<string | null>(null);
+  const [packetError, setPacketError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
   const selectedSummary = useMemo(
@@ -38,6 +43,7 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
     setIsSigningOut(true);
     try {
       offenderStore.reset();
+      packetStore.reset();
       await authService.logout();
     } finally {
       setIsSigningOut(false);
@@ -50,6 +56,7 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
     setSearchError(null);
     setDetailError(null);
     setParoleBoardError(null);
+    setPacketError(null);
 
     try {
       const response = await offenderService.search({
@@ -60,8 +67,10 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
         page: 1,
       });
       offenderStore.setSearchResults(response.results, response.pagination);
+      packetStore.reset();
     } catch (error) {
       offenderStore.reset();
+      packetStore.reset();
       setSearchError(error instanceof Error ? error.message : 'Unable to search for offenders right now.');
     } finally {
       setIsSearching(false);
@@ -73,8 +82,10 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
     setIsLoadingParoleBoard(false);
     setDetailError(null);
     setParoleBoardError(null);
+    setPacketError(null);
     offenderStore.setSelectedOffenderSid(offender.sid);
     offenderStore.setSelectedParoleBoardOffice(null);
+    packetStore.reset();
 
     try {
       const detail = await offenderService.getDetail(offender.sid);
@@ -102,7 +113,33 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
     }
   }
 
+  async function handleCreatePacket() {
+    if (!selectedOffenderDetail) {
+      return;
+    }
+
+    setIsCreatingPacket(true);
+    setPacketError(null);
+
+    try {
+      const packet = await packetService.create({
+        offender_sid: selectedOffenderDetail.sid,
+        offender_name: selectedOffenderDetail.name ?? selectedSummary?.name ?? 'Unknown Offender',
+        offender_tdcj_number: selectedOffenderDetail.tdcj_number,
+        current_facility: selectedOffenderDetail.current_facility,
+        parole_board_office_code: selectedParoleBoardOffice?.office_code ?? null,
+      });
+      packetStore.setActivePacket(packet);
+      navigation.navigate('PacketBuilder');
+    } catch (error) {
+      setPacketError(error instanceof Error ? error.message : 'Unable to create a packet right now.');
+    } finally {
+      setIsCreatingPacket(false);
+    }
+  }
+
   const canSearch = !isSearching && Boolean((lastName.trim() && firstNameInitial.trim()) || tdcjNumber.trim() || sid.trim());
+  const canCreatePacket = Boolean(selectedOffenderDetail && selectedParoleBoardOffice && !isCreatingPacket);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -154,7 +191,7 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
       {selectedSummary ? (
         <View style={styles.panel}>
           <Text style={styles.sectionTitle}>Selected Offender</Text>
-          <Text style={styles.sectionDescription}>Review the normalized offender detail returned from the backend before moving on to parole-board lookup and packet creation.</Text>
+          <Text style={styles.sectionDescription}>Review the normalized offender detail returned from the backend before moving on to packet creation.</Text>
           <View style={styles.detailCard}>
             <Text style={styles.detailTitle}>{selectedSummary.name}</Text>
             <DetailRow label="SID" value={selectedSummary.sid} />
@@ -188,11 +225,16 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
               <DetailRow label="Contact Phone" value={selectedParoleBoardOffice.phone} />
             </View>
           ) : null}
+          <Pressable style={[styles.primaryButton, !canCreatePacket && styles.primaryButtonDisabled]} onPress={handleCreatePacket} disabled={!canCreatePacket}>
+            <Text style={styles.primaryButtonText}>{isCreatingPacket ? 'Creating Packet…' : 'Create Packet'}</Text>
+          </Pressable>
+          {isCreatingPacket ? <LoadingState label="Creating packet and preparing sections…" /> : null}
+          {packetError ? <ErrorState message={packetError} /> : null}
         </View>
       ) : null}
 
       <View style={styles.list}>
-        <SectionCard title="Packet Builder" description="Placeholder packet builder shell" onPress={() => navigation.navigate('PacketBuilder')} />
+        {activePacket ? <SectionCard title="Packet Builder" description="Open the active packet builder flow" onPress={() => navigation.navigate('PacketBuilder')} /> : null}
         <SectionCard title="Scanner" description="Placeholder scanner shell" onPress={() => navigation.navigate('Scanner')} />
         <SectionCard title="Review" description="Placeholder review shell" onPress={() => navigation.navigate('Review')} />
         <SectionCard title="PDF Preview" description="Placeholder PDF preview shell" onPress={() => navigation.navigate('PdfPreview')} />
