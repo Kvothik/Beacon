@@ -6,6 +6,12 @@ Complete repository tree (excluding `.git/`):
 .
 ├── .gitignore
 ├── backend/
+│   ├── alembic/
+│   │   ├── env.py
+│   │   ├── script.py.mako
+│   │   └── versions/
+│   │       └── 20260311_0001_mvp_schema.py
+│   ├── alembic.ini
 │   ├── app/
 │   │   ├── core/
 │   │   │   ├── config.py
@@ -13,10 +19,13 @@ Complete repository tree (excluding `.git/`):
 │   │   │   └── security.py
 │   │   ├── main.py
 │   │   ├── models/
+│   │   │   ├── __init__.py
+│   │   │   ├── base.py
 │   │   │   ├── document.py
 │   │   │   ├── notification_subscription.py
 │   │   │   ├── offender.py
 │   │   │   ├── packet.py
+│   │   │   ├── parole_board.py
 │   │   │   └── user.py
 │   │   ├── routers/
 │   │   │   ├── auth_router.py
@@ -40,6 +49,7 @@ Complete repository tree (excluding `.git/`):
 │   │       ├── test_auth.py
 │   │       ├── test_offender.py
 │   │       └── test_packet.py
+│   ├── requirements.txt
 │   └── tools/
 │       └── discord_bridge.py
 ├── datasets/

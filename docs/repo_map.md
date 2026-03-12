@@ -84,6 +84,13 @@ mobile/
       offender.ts
 
 backend/
+  alembic.ini
+  requirements.txt
+  alembic/
+    env.py
+    script.py.mako
+    versions/
+      20260311_0001_mvp_schema.py
   tools/
     discord_bridge.py
   app/
@@ -110,8 +117,11 @@ backend/
       pdf_service.py
 
     models/
+      __init__.py
+      base.py
       user.py
       offender.py
+      parole_board.py
       packet.py
       document.py
       notification_subscription.py

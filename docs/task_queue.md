@@ -19,7 +19,15 @@ It is ordered for MVP-first delivery, keeps P0 separate from later work, and is 
 
 ## 3. MVP Build Order (P0)
 
+### Execution State
+
+- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`
+- current: `P0-05`
+
 ### P0-01. Lock documentation baseline and cross-document consistency
+
+Status:
+- completed
 
 Scope:
 - verify `northstar.md`, `agent_workflow.md`, `feature_priority.md`, `api_contracts.md`, `database_schema.md`, `pdf_spec.md`, `scanner_implementation.md`, `error_policy.md`, `system_invariants.md`, `tdcj_lookup_adapter.md`, and `tdcj_html_parser_spec.md`
@@ -39,6 +47,9 @@ Issue shape:
 - docs-only
 
 ### P0-02. Define backend app shell and runtime scaffolding
+
+Status:
+- completed
 
 Scope:
 - create the minimum FastAPI application shell
@@ -62,6 +73,9 @@ Issue shape:
 
 ### P0-03. Define mobile app shell and navigation scaffolding
 
+Status:
+- completed
+
 Scope:
 - create the minimum Expo/React Native shell
 - define app navigation and base screen structure from `docs/repo_map.md`
@@ -82,6 +96,9 @@ Issue shape:
 - scaffolding
 
 ### P0-04. Define database schema migrations and seed strategy
+
+Status:
+- completed
 
 Scope:
 - implement MVP database tables from `database_schema.md`
@@ -105,6 +122,9 @@ Issue shape:
 - seeds
 
 ### P0-05. Prepare parole board seed datasets and import path
+
+Status:
+- current
 
 Scope:
 - create repository-backed datasets for parole board offices and unit-to-office mappings under `datasets/`
