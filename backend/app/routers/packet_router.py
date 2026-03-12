@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from backend.app.core.db import get_session
 from backend.app.core.security import require_authenticated_user
 from backend.app.models.user import User
-from backend.app.schemas.packet import PacketCreateRequest, PacketCreateResponse
-from backend.app.services.packet_service import create_packet
+from backend.app.schemas.packet import PacketCreateRequest, PacketCreateResponse, PacketDetailResponse
+from backend.app.services.packet_service import create_packet, get_packet_detail
 
 router = APIRouter(prefix="/packets", tags=["packets"], dependencies=[Depends(require_authenticated_user)])
 
@@ -28,3 +30,13 @@ def create_packet_draft(
         parole_board_office_code=payload.parole_board_office_code,
     )
     return PacketCreateResponse(**packet)
+
+
+@router.get("/{packet_id}", response_model=PacketDetailResponse)
+def read_packet_detail(
+    packet_id: UUID,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_authenticated_user),
+) -> PacketDetailResponse:
+    packet = get_packet_detail(session, current_user=current_user, packet_id=packet_id)
+    return PacketDetailResponse(**packet)

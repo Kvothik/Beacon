@@ -16,18 +16,35 @@ os.environ["BEACON_DATABASE_URL"] = f"sqlite+pysqlite:///{DB_FILE}"
 
 from backend.app.core.db import create_session  # noqa: E402
 from backend.app.main import app  # noqa: E402
+from backend.app.models.document import Document  # noqa: E402
 from backend.app.models.packet import Packet, PacketSection  # noqa: E402
 from backend.app.services.parole_board_service import seed_parole_board_reference_data  # noqa: E402
 
 
-def register_and_get_token(client: TestClient) -> str:
-    email = f"packet-{uuid4().hex[:8]}@example.com"
+def register_and_get_token(client: TestClient, *, prefix: str = "packet") -> str:
+    email = f"{prefix}-{uuid4().hex[:8]}@example.com"
     response = client.post(
         "/api/v1/auth/register",
         json={"email": email, "password": "secret123", "full_name": "Jane Doe"},
     )
     assert response.status_code == 201
     return response.json()["access_token"]
+
+
+def create_packet(client: TestClient, token: str, *, sid: str = "05192675") -> dict:
+    response = client.post(
+        "/api/v1/packets",
+        json={
+            "offender_sid": sid,
+            "offender_name": "SMITH,J C",
+            "offender_tdcj_number": "02394240",
+            "current_facility": "ELLIS",
+            "parole_board_office_code": "HUNTSVILLE",
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 201
+    return response.json()
 
 
 class PacketRouterTests(unittest.TestCase):
@@ -49,19 +66,7 @@ class PacketRouterTests(unittest.TestCase):
 
     def test_create_packet_returns_documented_response_shape(self) -> None:
         token = register_and_get_token(self.client)
-        response = self.client.post(
-            "/api/v1/packets",
-            json={
-                "offender_sid": "05192675",
-                "offender_name": "SMITH,J C",
-                "offender_tdcj_number": "02394240",
-                "current_facility": "ELLIS",
-                "parole_board_office_code": "HUNTSVILLE",
-            },
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        self.assertEqual(response.status_code, 201)
-        body = response.json()
+        body = create_packet(self.client, token)
         UUID(body["id"])
         self.assertEqual(body["status"], "draft")
         self.assertEqual(body["offender_sid"], "05192675")
@@ -72,19 +77,8 @@ class PacketRouterTests(unittest.TestCase):
 
     def test_create_packet_initializes_all_sections_in_pdf_order(self) -> None:
         token = register_and_get_token(self.client)
-        response = self.client.post(
-            "/api/v1/packets",
-            json={
-                "offender_sid": "99999999",
-                "offender_name": "DOE,JANE",
-                "offender_tdcj_number": "12345678",
-                "current_facility": "ELLIS",
-                "parole_board_office_code": "HUNTSVILLE",
-            },
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        self.assertEqual(response.status_code, 201)
-        packet_id = UUID(response.json()["id"])
+        body = create_packet(self.client, token, sid="99999999")
+        packet_id = UUID(body["id"])
 
         with create_session() as session:
             packet = session.scalar(select(Packet).where(Packet.id == packet_id))
@@ -128,3 +122,72 @@ class PacketRouterTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json()["error"]["code"], "auth_unauthorized")
+
+    def test_get_packet_returns_metadata_sections_and_document_counts(self) -> None:
+        token = register_and_get_token(self.client)
+        body = create_packet(self.client, token, sid="11111111")
+        packet_id = UUID(body["id"])
+
+        with create_session() as session:
+            photos_section = session.scalar(
+                select(PacketSection).where(PacketSection.packet_id == packet_id, PacketSection.section_key == "photos")
+            )
+            photos_section.is_populated = True
+            photos_section.notes_text = "Two photos attached"
+            session.add(
+                Document(
+                    packet_id=packet_id,
+                    packet_section_id=photos_section.id,
+                    filename="photo1.jpg",
+                    content_type="image/jpeg",
+                    source="upload",
+                    upload_status="uploaded",
+                )
+            )
+            session.add(
+                Document(
+                    packet_id=packet_id,
+                    packet_section_id=photos_section.id,
+                    filename="photo2.jpg",
+                    content_type="image/jpeg",
+                    source="upload",
+                    upload_status="uploaded",
+                )
+            )
+            session.commit()
+
+        response = self.client.get(
+            f"/api/v1/packets/{packet_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        detail = response.json()
+        self.assertEqual(detail["id"], str(packet_id))
+        self.assertEqual(detail["offender"]["sid"], "11111111")
+        self.assertEqual(detail["parole_board_office_code"], "HUNTSVILLE")
+        self.assertEqual(len(detail["sections"]), 8)
+        photos = next(section for section in detail["sections"] if section["section_key"] == "photos")
+        self.assertTrue(photos["is_populated"])
+        self.assertEqual(photos["notes_text"], "Two photos attached")
+        self.assertEqual(photos["document_count"], 2)
+
+    def test_get_packet_returns_packet_not_found_for_missing_id(self) -> None:
+        token = register_and_get_token(self.client)
+        response = self.client.get(
+            f"/api/v1/packets/{uuid4()}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["error"]["code"], "packet_not_found")
+
+    def test_get_packet_enforces_ownership(self) -> None:
+        owner_token = register_and_get_token(self.client, prefix="owner")
+        other_token = register_and_get_token(self.client, prefix="other")
+        body = create_packet(self.client, owner_token, sid="22222222")
+
+        response = self.client.get(
+            f"/api/v1/packets/{body['id']}",
+            headers={"Authorization": f"Bearer {other_token}"},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["error"]["code"], "forbidden")

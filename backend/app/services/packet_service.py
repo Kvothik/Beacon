@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
+from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.core.security import ApiError
+from backend.app.models.document import Document
 from backend.app.models.offender import Offender
 from backend.app.models.packet import Packet, PacketSection
 from backend.app.models.parole_board import ParoleBoardOffice
@@ -98,6 +100,59 @@ def create_packet(
         "offender_tdcj_number": offender.tdcj_number,
         "current_facility": offender.current_facility,
         "parole_board_office_code": parole_board_office.office_code if parole_board_office else None,
+        "created_at": packet.created_at,
+        "updated_at": packet.updated_at,
+    }
+
+
+def get_packet_detail(session: Session, *, current_user: User, packet_id: UUID) -> dict[str, Any]:
+    packet = session.get(Packet, packet_id)
+    if packet is None:
+        raise ApiError(404, "packet_not_found", "No packet was found for that id.")
+    if packet.user_id != current_user.id:
+        raise ApiError(403, "forbidden", "You do not have access to that packet.")
+
+    offender = session.get(Offender, packet.offender_id)
+    if offender is None:
+        raise ApiError(500, "internal_error", "Packet offender snapshot is missing.")
+
+    parole_board_office_code = None
+    if packet.parole_board_office_id:
+        office = session.get(ParoleBoardOffice, packet.parole_board_office_id)
+        parole_board_office_code = office.office_code if office else None
+
+    sections = session.scalars(
+        select(PacketSection).where(PacketSection.packet_id == packet.id).order_by(PacketSection.sort_order)
+    ).all()
+    document_counts = {
+        section_id: count
+        for section_id, count in session.execute(
+            select(Document.packet_section_id, func.count(Document.id))
+            .where(Document.packet_id == packet.id)
+            .group_by(Document.packet_section_id)
+        ).all()
+    }
+
+    return {
+        "id": str(packet.id),
+        "status": packet.status,
+        "offender": {
+            "sid": offender.sid,
+            "name": offender.name,
+            "tdcj_number": offender.tdcj_number,
+            "current_facility": offender.current_facility,
+        },
+        "parole_board_office_code": parole_board_office_code,
+        "sections": [
+            {
+                "section_key": section.section_key,
+                "title": section.title,
+                "is_populated": section.is_populated,
+                "notes_text": section.notes_text,
+                "document_count": int(document_counts.get(section.id, 0)),
+            }
+            for section in sections
+        ],
         "created_at": packet.created_at,
         "updated_at": packet.updated_at,
     }
