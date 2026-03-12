@@ -7,12 +7,15 @@ This document defines the required execution order for autonomous implementation
 
 ## 2. Global Working Rules
 
+- Canonical local repository path: `~/dev/beacon`.
 - Work on one task at a time.
 - Prefer P0 scope until the MVP is complete.
 - Read only the docs and source files required for the current task.
 - Do not create endpoints, tables, packet sections, or PDF behaviors not documented in the specs.
 - If file structure changes, update `docs/repo_map.md` in the same change set.
 - After completing work for an issue, push the corresponding committed changes to GitHub before starting the next issue.
+- After completing work for a queued task or GitHub issue, update the corresponding GitHub issue/PR status and move the GitHub project/kanban card to the appropriate completion state before starting the next task.
+- If completion changes task status, update the repository docs that track execution state so completed work is reflected before starting the next task.
 - If a requested change conflicts with `system_invariants.md`, stop and ask.
 
 ## 3. Required Build Order

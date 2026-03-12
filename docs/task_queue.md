@@ -3,57 +3,612 @@ Audited build documentation for the Texas Parole Packet Builder
 
 ## 1. Purpose
 
-This document defines the implementation queue for autonomous work. It is ordered to preserve P0 delivery and prevent low-value work from starting too early.
+This document defines the repository-backed implementation queue for autonomous work.
+
+It is ordered for MVP-first delivery, keeps P0 separate from later work, and is written so each task can be converted into one or more GitHub issues.
 
 ## 2. Queue Rules
 
 - Work from top to bottom unless a human explicitly reprioritizes.
-- Only one active implementation task should be in progress at a time.
-- Documentation blockers should be cleared before code that depends on them.
-- P1 and P2 work stays blocked until P0 is substantially complete.
+- Keep only one implementation task actively in progress at a time.
+- Do not start P1 or P2 work until P0 is complete or explicitly reprioritized.
+- If a task would require inventing an endpoint, schema, packet section, or PDF behavior, stop and update docs first.
+- If file structure changes, update `docs/repo_map.md` in the same change set.
+- When a queued task is completed, update the corresponding GitHub issue/PR, move the GitHub project/kanban item to its completion state, and update repository tracking docs so the completed status is visible from repo context.
+- Treat blockers and dependencies listed here as part of the implementation contract.
 
-## 3. Current Queue
+## 3. MVP Build Order (P0)
 
-### Ready Now
-1. Finalize and cross-check documentation set
-2. Scaffold backend FastAPI application structure
-3. Scaffold mobile Expo application structure
-4. Define parole board office seed dataset format
+### P0-01. Lock documentation baseline and cross-document consistency
 
-### Next After Scaffolding
-5. Implement authentication backend endpoints
-6. Implement mobile login and registration flow
-7. Implement TDCJ offender search endpoint
-8. Implement mobile offender search and result selection flow
-9. Implement parole board office lookup endpoint
-10. Implement packet creation endpoint and packet section initialization
-11. Implement packet detail and section update endpoints
-12. Implement mobile packet builder and section detail screens
+Scope:
+- verify `northstar.md`, `agent_workflow.md`, `feature_priority.md`, `api_contracts.md`, `database_schema.md`, `pdf_spec.md`, `scanner_implementation.md`, `error_policy.md`, `system_invariants.md`, `tdcj_lookup_adapter.md`, and `tdcj_html_parser_spec.md`
+- resolve doc-level naming drift that would block implementation sequencing
+- confirm packet section names, endpoint names, table names, and PDF ordering are aligned
 
-### After Core Packet Flow
-13. Implement upload initiation and completion flow
-14. Implement mobile document upload UI
-15. Implement scanner v1 capture and retry flow
-16. Implement cover letter generation endpoint
-17. Implement final PDF generation endpoint
-18. Implement mobile review and export flow
+Why first:
+- `agent_workflow.md` requires the documentation baseline before application code expands
 
-### Hardening
-19. Add focused backend tests for auth
-20. Add focused backend tests for offender lookup normalization
-21. Add focused backend tests for packet and PDF flows
-22. Improve loading, retry, and error states in mobile
+Dependencies:
+- none
 
-## 4. Deferred Queue
+Blocks:
+- all implementation work
 
-Do not start until explicitly reprioritized:
-- push notification delivery flow
+Issue shape:
+- docs-only
+
+### P0-02. Define backend app shell and runtime scaffolding
+
+Scope:
+- create the minimum FastAPI application shell
+- define config, security, database wiring, and router registration layout consistent with `docs/repo_map.md`
+- add a health check endpoint within documented backend structure
+
+Dependencies:
+- P0-01
+
+Blocks:
+- auth endpoints
+- lookup endpoints
+- packet endpoints
+- upload endpoints
+- PDF endpoints
+- backend tests
+
+Issue shape:
+- backend
+- scaffolding
+
+### P0-03. Define mobile app shell and navigation scaffolding
+
+Scope:
+- create the minimum Expo/React Native shell
+- define app navigation and base screen structure from `docs/repo_map.md`
+- establish API client wiring and basic loading/error presentation primitives
+
+Dependencies:
+- P0-01
+
+Blocks:
+- auth UI
+- offender lookup UI
+- packet builder UI
+- scanner UI
+- review/export UI
+
+Issue shape:
+- mobile
+- scaffolding
+
+### P0-04. Define database schema migrations and seed strategy
+
+Scope:
+- implement MVP database tables from `database_schema.md`
+- define migrations for users, offenders, parole board offices, parole board unit mappings, packets, packet sections, documents, and notification subscriptions
+- define seed strategy for packet sections, parole board offices, and unit mappings
+
+Dependencies:
+- P0-01
+- P0-02
+
+Blocks:
+- auth persistence
+- packet creation
+- parole board lookup
+- uploads
+- notification subscription endpoint
+
+Issue shape:
+- backend
+- database
+- seeds
+
+### P0-05. Prepare parole board seed datasets and import path
+
+Scope:
+- create repository-backed datasets for parole board offices and unit-to-office mappings under `datasets/`
+- define import/seed path used by backend services
+- ensure backend lookup logic depends on seeded data, not hardcoded mobile logic
+
+Dependencies:
+- P0-01
+- P0-04
+
+Blocks:
+- parole board lookup endpoint
+- packet creation with office association
+- cover letter generation requiring office address data
+
+Issue shape:
+- data
+- backend
+
+### P0-06. Implement authentication backend
+
+Scope:
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `GET /api/v1/auth/me`
+- protected-route authentication enforcement
+- structured auth errors per `error_policy.md`
+
+Dependencies:
+- P0-02
+- P0-04
+
+Blocks:
+- all protected packet, upload, PDF, and notification flows
+- authenticated mobile flows
+
+Issue shape:
+- backend
+- auth
+
+### P0-07. Implement mobile authentication flow
+
+Scope:
+- login screen
+- registration screen
+- authenticated session/token handling
+- auth bootstrap to home screen
+- structured error display for auth failures
+
+Dependencies:
+- P0-03
+- P0-06
+
+Blocks:
+- authenticated user workflow in mobile
+
+Issue shape:
+- mobile
+- auth
+
+### P0-08. Implement TDCJ lookup adapter and parser core
+
+Scope:
+- implement backend adapter boundary in `backend/app/services/tdcj_lookup_service.py`
+- implement search request submission per `tdcj_lookup_adapter.md`
+- implement results-page parsing, SID extraction, pagination support, and detail-page parsing per `tdcj_html_parser_spec.md`
+- normalize transient integration data to API-facing shapes
+- return structured parser/network errors per `error_policy.md`
+
+Dependencies:
+- P0-02
+
+Blocks:
+- offender search endpoint
+- offender detail endpoint
+- offender normalization tests
+
+Issue shape:
+- backend
+- integration
+- parser
+
+### P0-09. Implement offender lookup API endpoints
+
+Scope:
+- `POST /api/v1/offenders/search`
+- `GET /api/v1/offenders/{sid}`
+- request validation for allowed search modes only
+- normalized source metadata in responses
+- no persistence beyond documented snapshot/caching rules
+
+Dependencies:
+- P0-02
+- P0-08
+
+Blocks:
+- mobile offender search flow
+- packet creation from selected offender
+
+Issue shape:
+- backend
+- offenders
+
+### P0-10. Implement mobile offender search and offender selection flow
+
+Scope:
+- search form for last name + first initial, TDCJ number, or SID
+- results list and user selection flow
+- offender detail display for selected SID
+- clear retry/error UX for TDCJ/network failures
+
+Dependencies:
+- P0-03
+- P0-09
+
+Blocks:
+- parole board lookup display
+- packet creation flow
+
+Issue shape:
+- mobile
+- offenders
+
+### P0-11. Implement parole board lookup service and endpoint
+
+Scope:
+- backend mapping from offender unit/facility to seeded parole board office data
+- `GET /api/v1/parole-board-office`
+- response shape exactly matching `api_contracts.md`
+
+Dependencies:
+- P0-02
+- P0-04
+- P0-05
+
+Blocks:
+- packet creation with office association
+- mobile office display
+- cover letter generation using office mailing info
+
+Issue shape:
+- backend
+- data
+- parole-board
+
+### P0-12. Implement mobile parole board office display
+
+Scope:
+- show office name, address, phone, and notes after offender selection
+- keep all mapping logic in backend
+
+Dependencies:
+- P0-03
+- P0-10
+- P0-11
+
+Blocks:
+- end-to-end pre-packet workflow
+
+Issue shape:
+- mobile
+- parole-board
+
+### P0-13. Implement packet creation and section initialization backend
+
+Scope:
+- `POST /api/v1/packets`
+- create offender snapshot record limited to documented fields
+- associate parole board office
+- initialize all eight packet sections in `pdf_spec.md` order with stored sort order
+
+Dependencies:
+- P0-04
+- P0-09
+- P0-11
+- P0-06
+
+Blocks:
+- packet detail retrieval
+- section editing
+- review flow
+- uploads tied to packet sections
+
+Issue shape:
+- backend
+- packets
+
+### P0-14. Implement packet detail, section update, and review backend
+
+Scope:
+- `GET /api/v1/packets/{packet_id}`
+- `PATCH /api/v1/packets/{packet_id}/sections/{section_key}`
+- `GET /api/v1/packets/{packet_id}/review`
+- section completeness and document count reporting
+- ownership enforcement and structured errors
+
+Dependencies:
+- P0-06
+- P0-13
+
+Blocks:
+- mobile packet builder
+- review screen
+- cover letter and PDF workflows
+
+Issue shape:
+- backend
+- packets
+- review
+
+### P0-15. Implement mobile packet builder and section detail flows
+
+Scope:
+- packet builder screen with section progress
+- section detail screen for all documented packet sections
+- notes entry and completion toggles per section
+- guidance copy placeholders wired to each section screen without adding new sections
+
+Dependencies:
+- P0-03
+- P0-13
+- P0-14
+
+Blocks:
+- upload attachment workflow from sections
+- review/export UX
+
+Issue shape:
+- mobile
+- packets
+
+### P0-16. Implement upload initiation/completion backend flow
+
+Scope:
+- `POST /api/v1/packets/{packet_id}/uploads`
+- `POST /api/v1/packets/{packet_id}/uploads/{document_id}/complete`
+- document record creation and packet-section association
+- object-storage metadata handling
+- upload failure handling per `error_policy.md`
+
+Dependencies:
+- P0-06
+- P0-13
+- P0-14
+
+Blocks:
+- mobile upload UI
+- scanner upload completion
+- PDF generation from attached files
+
+Issue shape:
+- backend
+- uploads
+
+### P0-17. Implement mobile document upload flow
+
+Scope:
+- document picker upload into selected packet section
+- upload progress/loading states appropriate for MVP
+- retry on structured retryable failures
+- document list refresh after upload completion
+
+Dependencies:
+- P0-03
+- P0-15
+- P0-16
+
+Blocks:
+- full non-scanner attachment workflow
+
+Issue shape:
+- mobile
+- uploads
+
+### P0-18. Implement scanner v1 mobile flow
+
+Scope:
+- camera permission request
+- capture, review, retake, and accept flow
+- upload accepted captures into selected packet section using upload API
+- temporary local retention only long enough for in-session retry
+
+Dependencies:
+- P0-03
+- P0-15
+- P0-16
+- `scanner_implementation.md`
+
+Blocks:
+- mobile scan-to-section workflow
+
+Issue shape:
+- mobile
+- scanner
+
+### P0-19. Implement cover letter generation backend
+
+Scope:
+- `POST /api/v1/packets/{packet_id}/cover-letter`
+- generate formal, respectful cover letter content using sender, offender, and board office data
+- enforce safety rule against innocence-claim generation
+
+Dependencies:
+- P0-11
+- P0-13
+- P0-14
+- P0-06
+
+Blocks:
+- final PDF generation
+- review/export completion
+
+Issue shape:
+- backend
+- pdf
+- content
+
+### P0-20. Implement final PDF generation backend
+
+Scope:
+- `POST /api/v1/packets/{packet_id}/pdf`
+- `GET /api/v1/packets/{packet_id}/pdf`
+- backend-only PDF assembly
+- cover letter insertion
+- populated-section divider pages only
+- section ordering exactly per `pdf_spec.md`
+- ready vs generating status handling without false success states
+
+Dependencies:
+- P0-16
+- P0-19
+- P0-14
+- P0-06
+
+Blocks:
+- mobile export completion flow
+- end-to-end MVP acceptance
+
+Issue shape:
+- backend
+- pdf
+
+### P0-21. Implement mobile review and export flow
+
+Scope:
+- review screen showing completeness by section
+- export trigger for cover letter/PDF generation flow
+- PDF-ready status polling or refresh UX consistent with API contract
+- clear loading, error, and success states
+
+Dependencies:
+- P0-15
+- P0-20
+- P0-14
+
+Blocks:
+- end-to-end MVP validation
+
+Issue shape:
+- mobile
+- review
+- export
+
+### P0-22. Add backend tests for authentication and authorization
+
+Scope:
+- registration/login/me happy paths
+- invalid credentials and unauthorized access
+- protected endpoint enforcement
+
+Dependencies:
+- P0-06
+
+Blocks:
+- MVP hardening completion
+
+Issue shape:
+- testing
+- backend
+- auth
+
+### P0-23. Add backend tests for TDCJ parsing and offender normalization
+
+Scope:
+- search result parsing
+- SID extraction
+- detail page normalization
+- parser mismatch and upstream failure handling
+- contract-level response shape validation for lookup endpoints
+
+Dependencies:
+- P0-08
+- P0-09
+
+Blocks:
+- MVP hardening completion
+
+Issue shape:
+- testing
+- backend
+- integration
+
+### P0-24. Add backend tests for packets, uploads, and PDF rules
+
+Scope:
+- packet creation and section initialization order
+- section update and review readiness behavior
+- upload initiation/completion persistence
+- PDF ordering, divider insertion, and failure rules
+
+Dependencies:
+- P0-13
+- P0-14
+- P0-16
+- P0-19
+- P0-20
+
+Blocks:
+- MVP hardening completion
+
+Issue shape:
+- testing
+- backend
+- pdf
+
+### P0-25. MVP hardening for mobile loading, retry, and error states
+
+Scope:
+- consistent retry behavior for retryable backend failures
+- better loading/error states across auth, lookup, uploads, scanner, review, and export
+- final UX polish limited to documented MVP scope
+
+Dependencies:
+- P0-07
+- P0-10
+- P0-12
+- P0-15
+- P0-17
+- P0-18
+- P0-21
+- `error_policy.md`
+
+Blocks:
+- final MVP acceptance
+
+Issue shape:
+- mobile
+- hardening
+
+### P0-26. End-to-end MVP validation pass
+
+Scope:
+- validate complete user path: register → login → offender lookup → office lookup → packet creation → section editing → upload/scan → cover letter → review → PDF export
+- confirm conformance to documented API contracts, schema limits, PDF ordering, scanner behavior, and system invariants
+- capture remaining doc/code mismatches as follow-up issues only if within documented scope
+
+Dependencies:
+- all prior P0 tasks
+
+Blocks:
+- P1 work
+
+Issue shape:
+- testing
+- qa
+- docs
+
+## 4. Later Work (Blocked Until P0 Completion)
+
+### P1
+- push notification subscription endpoint and delivery wiring
 - PDF preview enhancements
-- AI-assisted drafting
+- improved section completion scoring
+- better upload progress and retry UX beyond MVP minimums
+- template refinements for cover letter and divider pages
+
+### P2
+- AI-assisted support letter drafting
 - packet quality scoring
-- analytics/admin features
-- collaboration/shared editing
+- photo enhancement suggestions
+- analytics or admin dashboards
+- collaboration or shared editing
 
-## 5. Blocker Rule
+## 5. Dependency Notes
 
-If a queue item depends on undocumented behavior, pause that item and update the relevant documentation first.
+- Notification work is intentionally deferred even though `notification_subscriptions` exists in the schema and an endpoint is documented; `feature_priority.md` places meaningful notification delivery in P1.
+- Mobile must never implement TDCJ scraping, parole board mapping rules, or PDF composition logic.
+- Offender search/detail responses are transient integration data; packet creation may persist only the documented offender snapshot fields.
+- PDF generation must not start before uploads, packet section state, cover letter content, and parole board data are available.
+
+## 6. Task Selection Rule
+
+When multiple P0 tasks are available, choose the highest unfinished task that:
+1. is unblocked
+2. has the smallest documentation risk
+3. unlocks the largest number of downstream tasks
+
+Prefer foundational backend/data tasks before dependent mobile UX tasks.
+
+## 7. Blocker Rule
+
+Stop and report a blocker when:
+- a required source doc is contradictory
+- a task would require inventing an undocumented endpoint, table, packet section, or PDF behavior
+- TDCJ HTML no longer matches `tdcj_html_parser_spec.md`
+- the change would violate `system_invariants.md`
+- the next step would drift into P1/P2 before P0 completion
