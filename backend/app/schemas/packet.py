@@ -95,3 +95,10 @@ class PacketCoverLetterResponse(BaseModel):
     packet_id: str
     cover_letter_text: str
     updated_at: datetime
+
+
+class PacketPdfGenerateResponse(BaseModel):
+    packet_id: str
+    status: str
+    pdf_url: str
+    generated_at: datetime

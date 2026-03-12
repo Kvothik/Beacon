@@ -14,6 +14,7 @@ from backend.app.schemas.packet import (
     PacketCreateRequest,
     PacketCreateResponse,
     PacketDetailResponse,
+    PacketPdfGenerateResponse,
     PacketSectionUpdateRequest,
     PacketSectionUpdateResponse,
     PacketUploadCreateRequest,
@@ -23,6 +24,7 @@ from backend.app.services.packet_service import (
     create_packet,
     create_packet_upload,
     generate_cover_letter,
+    generate_packet_pdf,
     get_packet_detail,
     update_packet_section,
 )
@@ -113,3 +115,13 @@ def create_packet_cover_letter(
         sender_relationship=payload.sender_relationship,
     )
     return PacketCoverLetterResponse(**cover_letter)
+
+
+@router.post("/{packet_id}/pdf", response_model=PacketPdfGenerateResponse)
+def generate_packet_pdf_artifact(
+    packet_id: UUID,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_authenticated_user),
+) -> PacketPdfGenerateResponse:
+    pdf = generate_packet_pdf(session, current_user=current_user, packet_id=packet_id)
+    return PacketPdfGenerateResponse(**pdf)

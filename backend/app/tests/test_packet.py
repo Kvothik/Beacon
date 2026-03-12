@@ -47,6 +47,21 @@ def create_packet(client: TestClient, token: str, *, sid: str = "05192675") -> d
     return response.json()
 
 
+def create_cover_letter(client: TestClient, token: str, packet_id: str) -> dict:
+    response = client.post(
+        f"/api/v1/packets/{packet_id}/cover-letter",
+        json={
+            "sender_name": "Jane Doe",
+            "sender_phone": "512-555-0100",
+            "sender_email": "jane@example.com",
+            "sender_relationship": "sister",
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    return response.json()
+
+
 class PacketRouterTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -295,18 +310,7 @@ class PacketRouterTests(unittest.TestCase):
         token = register_and_get_token(self.client)
         body = create_packet(self.client, token, sid="99999998")
 
-        response = self.client.post(
-            f"/api/v1/packets/{body['id']}/cover-letter",
-            json={
-                "sender_name": "Jane Doe",
-                "sender_phone": "512-555-0100",
-                "sender_email": "jane@example.com",
-                "sender_relationship": "sister",
-            },
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        self.assertEqual(response.status_code, 200)
-        letter = response.json()
+        letter = create_cover_letter(self.client, token, body["id"])
         self.assertEqual(letter["packet_id"], body["id"])
         self.assertIn("Jane Doe", letter["cover_letter_text"])
         self.assertIn("SMITH,J C", letter["cover_letter_text"])
@@ -357,3 +361,62 @@ class PacketRouterTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["error"]["code"], "forbidden")
+
+    def test_post_pdf_generates_pdf_url_when_packet_ready(self) -> None:
+        token = register_and_get_token(self.client)
+        body = create_packet(self.client, token, sid="99999996")
+        create_cover_letter(self.client, token, body["id"])
+        self.client.patch(
+            f"/api/v1/packets/{body['id']}/sections/reflection_letter",
+            json={"notes_text": "Ready for review.", "is_populated": True},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        response = self.client.post(
+            f"/api/v1/packets/{body['id']}/pdf",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        pdf = response.json()
+        self.assertEqual(pdf["packet_id"], body["id"])
+        self.assertEqual(pdf["status"], "ready")
+        self.assertIn("/final-packet.pdf", pdf["pdf_url"])
+        self.assertIn("generated_at", pdf)
+
+    def test_post_pdf_requires_cover_letter(self) -> None:
+        token = register_and_get_token(self.client)
+        body = create_packet(self.client, token, sid="99999995")
+        self.client.patch(
+            f"/api/v1/packets/{body['id']}/sections/reflection_letter",
+            json={"notes_text": "Ready for review.", "is_populated": True},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        response = self.client.post(
+            f"/api/v1/packets/{body['id']}/pdf",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"]["code"], "validation_error")
+
+    def test_post_pdf_enforces_ownership(self) -> None:
+        owner_token = register_and_get_token(self.client, prefix="ownerpdf")
+        other_token = register_and_get_token(self.client, prefix="otherpdf")
+        body = create_packet(self.client, owner_token, sid="99999994")
+        create_cover_letter(self.client, owner_token, body["id"])
+        self.client.patch(
+            f"/api/v1/packets/{body['id']}/sections/reflection_letter",
+            json={"notes_text": "Ready for review.", "is_populated": True},
+            headers={"Authorization": f"Bearer {owner_token}"},
+        )
+
+        response = self.client.post(
+            f"/api/v1/packets/{body['id']}/pdf",
+            headers={"Authorization": f"Bearer {other_token}"},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["error"]["code"], "forbidden")
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -26,6 +26,7 @@ PACKET_SECTION_DEFINITIONS: list[dict[str, Any]] = [
     {"section_key": "other_miscellaneous", "title": "Other or Miscellaneous", "sort_order": 8},
 ]
 UPLOAD_URL_PLACEHOLDER = "https://object-storage.example/upload"
+PDF_URL_PREFIX = "https://object-storage.example/packets"
 
 
 def create_packet(
@@ -310,6 +311,33 @@ def generate_cover_letter(
         'packet_id': str(packet.id),
         'cover_letter_text': packet.cover_letter_text,
         'updated_at': packet.updated_at,
+    }
+
+
+def generate_packet_pdf(session: Session, *, current_user: User, packet_id: UUID) -> dict[str, Any]:
+    packet = session.get(Packet, packet_id)
+    if packet is None:
+        raise ApiError(404, 'packet_not_found', 'No packet was found for that id.')
+    if packet.user_id != current_user.id:
+        raise ApiError(403, 'forbidden', 'You do not have access to that packet.')
+    if not packet.cover_letter_text:
+        raise ApiError(400, 'validation_error', 'Packet PDF generation requires a cover letter.', details={'fields': ['cover_letter_text']})
+
+    sections = session.scalars(select(PacketSection).where(PacketSection.packet_id == packet.id)).all()
+    if not any(section.is_populated for section in sections):
+        raise ApiError(400, 'validation_error', 'Packet PDF generation requires at least one populated section.', details={'fields': ['sections']})
+
+    packet.status = 'ready'
+    packet.generated_pdf_key = f"packets/{packet.id}/final-packet.pdf"
+    packet.pdf_generated_at = datetime.now(timezone.utc)
+    session.commit()
+    session.refresh(packet)
+
+    return {
+        'packet_id': str(packet.id),
+        'status': packet.status,
+        'pdf_url': f"{PDF_URL_PREFIX}/{packet.id}/final-packet.pdf",
+        'generated_at': packet.pdf_generated_at,
     }
 
 
