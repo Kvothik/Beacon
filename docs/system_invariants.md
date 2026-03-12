@@ -141,6 +141,7 @@ Sixx:
 - `docs/**`
 - `repo_map.md`
 - architecture
+- orchestration and message routing
 
 Forge:
 - `backend/**`
@@ -154,3 +155,9 @@ Rules:
 - architecture, schema, or API contract changes must be approved through Sixx
 - agents must not spawn additional agents
 - only one agent may own a GitHub issue
+- all agent-to-human messages route through Sixx
+- all human-to-agent execution instructions route through Sixx
+- Forge and Atlas must not message the user directly unless routed through Sixx
+- Shepherd must remain advisory only
+- Sentinel must remain QA/review only unless explicitly approved otherwise
+- Sixx must stop or reroute any behavior that violates these boundaries

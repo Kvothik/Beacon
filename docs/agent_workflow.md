@@ -14,6 +14,7 @@ This document defines the required execution order for autonomous implementation
 - Do not create endpoints, tables, packet sections, or PDF behaviors not documented in the specs.
 - If file structure changes, update `docs/repo_map.md` in the same change set.
 - After completing work for an issue, push the corresponding committed changes to GitHub before starting the next issue.
+- Sixx must not report an issue as fully completed to the user until the relevant commits have been pushed to the GitHub repository.
 - After completing work for a queued task or GitHub issue, update the corresponding GitHub issue/PR status and move the GitHub project/kanban card to the appropriate completion state before starting the next task.
 - If completion changes task status, update the repository docs that track execution state so completed work is reflected before starting the next task.
 - If real-world data ambiguity exists, the agent may implement a `TEMP_RULE` to keep development moving only when the rule is clearly marked in code/docs as temporary and a follow-up GitHub issue is created for the real logic.
@@ -174,7 +175,27 @@ When operating through the developer Discord bridge:
 - prefer copy/paste-friendly formatting with short sections and bullets
 - if the response would be very long, compress it rather than splitting it into multiple Discord messages
 
-## 6. Validation Rules
+## 6. Token Optimization Rule
+
+Reduce token usage.
+
+Rules:
+- do not repeatedly re-read the entire repository or docs unless required
+- use cached context whenever possible
+- only read files directly related to the current issue
+- do not rehydrate the entire repo unless context is lost
+- do not re-scan docs on every task
+- prefer targeted file reads instead of directory scans
+- do not summarize unchanged documentation repeatedly
+- do not produce long explanations when a short status is sufficient
+
+Default status reports should include only:
+- issue number
+- files changed
+- verification result
+- next recommended issue
+
+## 7. Validation Rules
 
 ### For documentation-only changes
 - check cross-document consistency
@@ -241,3 +262,17 @@ Commit rules:
 - all commits must reference the GitHub issue number
 - all commits must be reviewed or finalized through Sixx
 - commit message format: `type: description (#issue)`
+
+Supervisor and QA behavior:
+- Shepherd is approval-gated and remains continuously ready to recommend the next valid step when work completes or the system becomes idle
+- Shepherd may draft commands and send recommendations to the user only through Sixx, but never executes work directly
+- Sentinel is approval-gated and reviews completed work for regressions, drift, missing verification, and acceptance-criteria compliance
+- Sentinel may prepare future GitHub issues only after explicit approval and does not assign them itself
+- implementation completion flow is: implementation done -> Sixx verifies -> board/card to `DELIVERED` -> Sentinel review -> `ACCEPTED` or `IN PROGRESS`
+- after any board move, Sixx must verify that the issue/card is actually present on the project board and in the expected status before reporting completion
+- if Sentinel accepts, Sixx must relay the Sentinel result to the user immediately and then forward minimal review data to Shepherd for the next recommendation
+- if Sentinel rejects, Sixx must relay the Sentinel rejection to the user immediately; no other issue may begin until the rejection is addressed or the human explicitly reprioritizes
+- all agent-to-human messages and all human-to-agent execution instructions route through Sixx
+- Forge and Atlas do not message the user directly unless routed through Sixx
+- if Sixx receives any agent message, Sixx must relay it to the user through Discord immediately
+- Sixx remains the execution gateway, central orchestrator, and message router, and enforces agent scope boundaries

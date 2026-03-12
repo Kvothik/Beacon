@@ -44,6 +44,10 @@ docs/
   system_invariants.md
   task_queue.md
   github_issue_board_plan.md
+  orchestrator_context.md
+  approval_gated_supervisor.md
+  qa_review_model.md
+  sentinel_context.md
   tdcj_lookup_adapter.md
   tdcj_html_parser_spec.md
 

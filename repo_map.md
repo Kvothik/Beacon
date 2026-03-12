@@ -70,16 +70,20 @@ Complete repository tree (excluding `.git/`):
 │   ├── agent_workflow.md
 │   ├── ai_engineering_rules.md
 │   ├── api_contracts.md
+│   ├── approval_gated_supervisor.md
 │   ├── database_schema.md
 │   ├── error_policy.md
 │   ├── feature_priority.md
+│   ├── github_issue_board_plan.md
 │   ├── northstar.md
+│   ├── orchestrator_context.md
 │   ├── pdf_spec.md
+│   ├── qa_review_model.md
 │   ├── repo_map.md
 │   ├── scanner_implementation.md
+│   ├── sentinel_context.md
 │   ├── system_invariants.md
 │   ├── task_queue.md
-│   ├── github_issue_board_plan.md
 │   ├── tdcj_html_parser_spec.md
 │   └── tdcj_lookup_adapter.md
 ├── infra/
