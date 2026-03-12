@@ -1,5 +1,5 @@
 import { apiRequest } from './apiClient';
-import type { OffenderDetail, OffenderSearchRequest, OffenderSearchResponse } from '../types/offender';
+import type { OffenderDetail, OffenderSearchRequest, OffenderSearchResponse, ParoleBoardOffice } from '../types/offender';
 
 function normalizeSearchPayload(payload: OffenderSearchRequest): OffenderSearchRequest {
   return {
@@ -21,5 +21,13 @@ export const offenderService = {
 
   async getDetail(sid: string) {
     return apiRequest<OffenderDetail>(`/offenders/${encodeURIComponent(sid)}`);
+  },
+
+  async getParoleBoardOffice(unit: string, sid?: string) {
+    const searchParams = new URLSearchParams({ unit: unit.trim() });
+    if (sid?.trim()) {
+      searchParams.set('sid', sid.trim());
+    }
+    return apiRequest<ParoleBoardOffice>(`/parole-board-office?${searchParams.toString()}`);
   },
 };

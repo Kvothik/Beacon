@@ -21,8 +21,8 @@ It is ordered for MVP-first delivery, keeps P0 separate from later work, and is 
 
 ### Execution State
 
-- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`, `P0-06`, `P0-07`, `P0-08`, `P0-09`, `P0-10`, `P0-11`
-- current: `P0-12`
+- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`, `P0-06`, `P0-07`, `P0-08`, `P0-09`, `P0-10`, `P0-11`, `P0-12`
+- current: `P0-13`
 
 ### P0-01. Lock documentation baseline and cross-document consistency
 
@@ -289,6 +289,9 @@ Issue shape:
 - parole-board
 
 ### P0-12. Implement mobile parole board office display
+
+Status:
+- completed
 
 Scope:
 - show office name, address, phone, and notes after offender selection

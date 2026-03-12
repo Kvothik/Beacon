@@ -15,7 +15,7 @@ import type { OffenderSummary } from '../types/offender';
 
 export default function HomeScreen({ navigation }: NativeStackScreenProps<AppStackParamList, 'Home'>) {
   const { session } = useAuthStore();
-  const { results, pagination, selectedOffenderSid, selectedOffenderDetail } = useOffenderStore();
+  const { results, pagination, selectedOffenderSid, selectedOffenderDetail, selectedParoleBoardOffice } = useOffenderStore();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [lastName, setLastName] = useState('');
   const [firstNameInitial, setFirstNameInitial] = useState('');
@@ -23,8 +23,10 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
   const [sid, setSid] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const [isLoadingParoleBoard, setIsLoadingParoleBoard] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const [paroleBoardError, setParoleBoardError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
   const selectedSummary = useMemo(
@@ -47,6 +49,7 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
     setHasSearched(true);
     setSearchError(null);
     setDetailError(null);
+    setParoleBoardError(null);
 
     try {
       const response = await offenderService.search({
@@ -67,14 +70,32 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
 
   async function handleSelectOffender(offender: OffenderSummary) {
     setIsLoadingDetail(true);
+    setIsLoadingParoleBoard(false);
     setDetailError(null);
+    setParoleBoardError(null);
     offenderStore.setSelectedOffenderSid(offender.sid);
+    offenderStore.setSelectedParoleBoardOffice(null);
 
     try {
       const detail = await offenderService.getDetail(offender.sid);
       offenderStore.setSelectedOffenderDetail(detail);
+
+      const lookupUnit = detail.current_facility ?? offender.unit;
+      if (lookupUnit) {
+        setIsLoadingParoleBoard(true);
+        try {
+          const office = await offenderService.getParoleBoardOffice(lookupUnit, offender.sid);
+          offenderStore.setSelectedParoleBoardOffice(office);
+        } catch (error) {
+          offenderStore.setSelectedParoleBoardOffice(null);
+          setParoleBoardError(error instanceof Error ? error.message : 'Unable to load parole board office information right now.');
+        } finally {
+          setIsLoadingParoleBoard(false);
+        }
+      }
     } catch (error) {
       offenderStore.setSelectedOffenderDetail(null);
+      offenderStore.setSelectedParoleBoardOffice(null);
       setDetailError(error instanceof Error ? error.message : 'Unable to load offender details right now.');
     } finally {
       setIsLoadingDetail(false);
@@ -153,6 +174,20 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
               <DetailRow label="Scheduled Release Date" value={selectedOffenderDetail.scheduled_release_date_text} />
             </View>
           ) : null}
+          {isLoadingParoleBoard ? <LoadingState label="Loading parole board office…" /> : null}
+          {paroleBoardError ? <ErrorState message={paroleBoardError} /> : null}
+          {selectedParoleBoardOffice ? (
+            <View style={styles.detailCard}>
+              <Text style={styles.detailTitle}>Parole Board Office</Text>
+              <DetailRow label="Office Name" value={selectedParoleBoardOffice.office_name} />
+              <DetailRow label="Office Code" value={selectedParoleBoardOffice.office_code} />
+              <DetailRow label="Mailing Address" value={formatMailingAddress(selectedParoleBoardOffice.address_lines)} />
+              <DetailRow label="City" value={selectedParoleBoardOffice.city} />
+              <DetailRow label="State" value={selectedParoleBoardOffice.state} />
+              <DetailRow label="ZIP" value={selectedParoleBoardOffice.postal_code} />
+              <DetailRow label="Contact Phone" value={selectedParoleBoardOffice.phone} />
+            </View>
+          ) : null}
         </View>
       ) : null}
 
@@ -192,6 +227,10 @@ function formatResultDescription(result: OffenderSummary) {
   ].filter(Boolean);
 
   return parts.length > 0 ? parts.join(' • ') : 'Tap to load normalized offender detail.';
+}
+
+function formatMailingAddress(addressLines: string[]) {
+  return addressLines.join(', ');
 }
 
 const styles = StyleSheet.create({

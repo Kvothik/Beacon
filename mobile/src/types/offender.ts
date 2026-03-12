@@ -62,3 +62,14 @@ export type OffenderDetail = {
   retrieved_at: string;
   source_note: string;
 };
+
+export type ParoleBoardOffice = {
+  office_code: string;
+  office_name: string;
+  address_lines: string[];
+  city: string;
+  state: string;
+  postal_code: string;
+  phone: string | null;
+  notes: string | null;
+};
