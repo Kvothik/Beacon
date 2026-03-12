@@ -148,6 +148,7 @@ backend/
       test_auth.py
       test_offender.py
       test_packet.py
+      test_parole_board.py
 
 infra/
   docker/

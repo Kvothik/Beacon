@@ -21,8 +21,8 @@ It is ordered for MVP-first delivery, keeps P0 separate from later work, and is 
 
 ### Execution State
 
-- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`, `P0-06`, `P0-07`, `P0-08`, `P0-09`, `P0-10`
-- current: `P0-11`
+- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`, `P0-06`, `P0-07`, `P0-08`, `P0-09`, `P0-10`, `P0-11`
+- current: `P0-12`
 
 ### P0-01. Lock documentation baseline and cross-document consistency
 
@@ -264,6 +264,9 @@ Issue shape:
 - offenders
 
 ### P0-11. Implement parole board lookup service and endpoint
+
+Status:
+- completed
 
 Scope:
 - backend mapping from offender unit/facility to seeded parole board office data

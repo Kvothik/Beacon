@@ -9,6 +9,7 @@ from typing import Any, Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.app.core.security import ApiError
 from backend.app.models.parole_board import ParoleBoardOffice, ParoleBoardUnitMapping
 
 DATASETS_DIR = Path(__file__).resolve().parents[3] / "datasets"
@@ -17,7 +18,7 @@ UNIT_MAPPINGS_DATASET_PATH = DATASETS_DIR / "parole_board_unit_mappings.json"
 
 
 def normalize_unit_name(unit_name: str) -> str:
-    return re.sub(r"\s+", " ", unit_name.replace("*", "")).strip().upper()
+    return re.sub(r"\s+", " ", unit_name.replace("*", " ")).strip().upper()
 
 
 def _read_json(path: Path) -> list[dict[str, Any]]:
@@ -68,7 +69,61 @@ def load_seeded_unit_lookup() -> dict[str, dict[str, Any]]:
 def resolve_seeded_office_for_unit(unit_name: str) -> Optional[dict[str, Any]]:
     if not unit_name:
         return None
-    return load_seeded_unit_lookup().get(normalize_unit_name(unit_name))
+
+    lookup = load_seeded_unit_lookup()
+    for candidate_key in candidate_unit_lookup_keys(unit_name):
+        office = lookup.get(candidate_key)
+        if office is not None:
+            return office
+    return None
+
+
+def candidate_unit_lookup_keys(unit_name: str) -> list[str]:
+    normalized = normalize_unit_name(unit_name)
+    candidates = [normalized]
+    if normalized.endswith(" UNIT"):
+        candidates.append(normalized[: -len(" UNIT")].strip())
+    else:
+        candidates.append(f"{normalized} UNIT")
+    return list(dict.fromkeys(candidate for candidate in candidates if candidate))
+
+
+def lookup_parole_board_office(unit_name: str, sid: Optional[str] = None) -> dict[str, Any]:
+    normalized_unit = normalize_unit_name(unit_name)
+    if not normalized_unit:
+        raise ApiError(
+            400,
+            "validation_error",
+            "Request validation failed.",
+            details={"fields": ["unit"]},
+        )
+
+    office = resolve_seeded_office_for_unit(normalized_unit)
+    if office is None:
+        details: dict[str, Any] = {"unit": unit_name}
+        if sid:
+            details["sid"] = sid
+        raise ApiError(
+            404,
+            "not_found",
+            "No parole board office was found for that unit.",
+            details=details,
+        )
+
+    address_lines = [office["address_line_1"]]
+    if office.get("address_line_2"):
+        address_lines.append(office["address_line_2"])
+
+    return {
+        "office_code": office["office_code"],
+        "office_name": office["office_name"],
+        "address_lines": address_lines,
+        "city": office["city"],
+        "state": office["state"],
+        "postal_code": office["postal_code"],
+        "phone": office.get("phone"),
+        "notes": office.get("notes"),
+    }
 
 
 def seed_parole_board_reference_data(session: Session) -> tuple[int, int]:
