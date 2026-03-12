@@ -233,3 +233,60 @@ class PacketRouterTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["error"]["code"], "forbidden")
+
+    def test_post_packet_upload_creates_pending_document_record(self) -> None:
+        token = register_and_get_token(self.client)
+        body = create_packet(self.client, token, sid="66666666")
+
+        response = self.client.post(
+            f"/api/v1/packets/{body['id']}/uploads",
+            json={
+                "section_key": "photos",
+                "filename": "image1.jpg",
+                "content_type": "image/jpeg",
+                "source": "scanner",
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        upload = response.json()
+        self.assertEqual(upload["packet_id"], body["id"])
+        self.assertEqual(upload["section_key"], "photos")
+        self.assertEqual(upload["upload_status"], "pending")
+        self.assertIn("upload_url", upload)
+        self.assertIn("storage_key", upload)
+
+    def test_post_packet_upload_rejects_invalid_section_key(self) -> None:
+        token = register_and_get_token(self.client)
+        body = create_packet(self.client, token, sid="77777777")
+
+        response = self.client.post(
+            f"/api/v1/packets/{body['id']}/uploads",
+            json={
+                "section_key": "bad_section",
+                "filename": "image1.jpg",
+                "content_type": "image/jpeg",
+                "source": "scanner",
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"]["code"], "validation_error")
+
+    def test_post_packet_upload_enforces_ownership(self) -> None:
+        owner_token = register_and_get_token(self.client, prefix="ownerupload")
+        other_token = register_and_get_token(self.client, prefix="otherupload")
+        body = create_packet(self.client, owner_token, sid="88888888")
+
+        response = self.client.post(
+            f"/api/v1/packets/{body['id']}/uploads",
+            json={
+                "section_key": "photos",
+                "filename": "image1.jpg",
+                "content_type": "image/jpeg",
+                "source": "upload",
+            },
+            headers={"Authorization": f"Bearer {other_token}"},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["error"]["code"], "forbidden")

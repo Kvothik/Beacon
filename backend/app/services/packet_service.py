@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -8,7 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.core.security import ApiError
-from backend.app.models.document import Document
+from backend.app.models.document import DOCUMENT_SOURCE_VALUES, Document
 from backend.app.models.offender import Offender
 from backend.app.models.packet import SECTION_KEY_VALUES, Packet, PacketSection
 from backend.app.models.parole_board import ParoleBoardOffice
@@ -24,6 +25,7 @@ PACKET_SECTION_DEFINITIONS: list[dict[str, Any]] = [
     {"section_key": "court_and_case_documents", "title": "Court and Case Documents", "sort_order": 7},
     {"section_key": "other_miscellaneous", "title": "Other or Miscellaneous", "sort_order": 8},
 ]
+UPLOAD_URL_PLACEHOLDER = "https://object-storage.example/upload"
 
 
 def create_packet(
@@ -193,6 +195,70 @@ def update_packet_section(
         "is_populated": section.is_populated,
         "document_count": int(document_counts.get(section.id, 0)),
         "updated_at": section.updated_at,
+    }
+
+
+def create_packet_upload(
+    session: Session,
+    *,
+    current_user: User,
+    packet_id: UUID,
+    section_key: str,
+    filename: str,
+    content_type: str,
+    source: str,
+) -> dict[str, Any]:
+    packet = session.get(Packet, packet_id)
+    if packet is None:
+        raise ApiError(404, "packet_not_found", "No packet was found for that id.")
+    if packet.user_id != current_user.id:
+        raise ApiError(403, "forbidden", "You do not have access to that packet.")
+    if section_key not in SECTION_KEY_VALUES:
+        raise ApiError(400, "validation_error", "Request validation failed.", details={"fields": ["section_key"]})
+    if source not in DOCUMENT_SOURCE_VALUES:
+        raise ApiError(400, "validation_error", "Request validation failed.", details={"fields": ["source"]})
+
+    section = session.scalar(
+        select(PacketSection).where(PacketSection.packet_id == packet.id, PacketSection.section_key == section_key)
+    )
+    if section is None:
+        raise ApiError(404, "not_found", "No packet section was found for that key.")
+
+    cleaned_filename = Path(filename.strip()).name
+    if not cleaned_filename or not content_type.strip():
+        raise ApiError(
+            400,
+            "validation_error",
+            "Request validation failed.",
+            details={"fields": [field for field, value in (("filename", cleaned_filename), ("content_type", content_type.strip())) if not value]},
+        )
+
+    document = Document(
+        packet_id=packet.id,
+        packet_section_id=section.id,
+        filename=cleaned_filename,
+        content_type=content_type.strip(),
+        source=source,
+        upload_status="pending",
+    )
+    session.add(document)
+    session.flush()
+
+    storage_key = f"packets/{packet.id}/documents/{document.id}-{cleaned_filename}"
+    document.storage_key = storage_key
+    session.commit()
+    session.refresh(document)
+
+    return {
+        "document_id": str(document.id),
+        "packet_id": str(packet.id),
+        "section_key": section.section_key,
+        "filename": document.filename,
+        "content_type": document.content_type,
+        "upload_status": document.upload_status,
+        "upload_url": UPLOAD_URL_PLACEHOLDER,
+        "storage_key": storage_key,
+        "created_at": document.created_at,
     }
 
 

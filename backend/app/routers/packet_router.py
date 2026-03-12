@@ -14,8 +14,10 @@ from backend.app.schemas.packet import (
     PacketDetailResponse,
     PacketSectionUpdateRequest,
     PacketSectionUpdateResponse,
+    PacketUploadCreateRequest,
+    PacketUploadCreateResponse,
 )
-from backend.app.services.packet_service import create_packet, get_packet_detail, update_packet_section
+from backend.app.services.packet_service import create_packet, create_packet_upload, get_packet_detail, update_packet_section
 
 router = APIRouter(prefix="/packets", tags=["packets"], dependencies=[Depends(require_authenticated_user)])
 
@@ -65,3 +67,22 @@ def update_packet_section_detail(
         is_populated=payload.is_populated,
     )
     return PacketSectionUpdateResponse(**section)
+
+
+@router.post("/{packet_id}/uploads", response_model=PacketUploadCreateResponse, status_code=status.HTTP_201_CREATED)
+def create_packet_upload_record(
+    packet_id: UUID,
+    payload: PacketUploadCreateRequest,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_authenticated_user),
+) -> PacketUploadCreateResponse:
+    document = create_packet_upload(
+        session,
+        current_user=current_user,
+        packet_id=packet_id,
+        section_key=payload.section_key,
+        filename=payload.filename,
+        content_type=payload.content_type,
+        source=payload.source,
+    )
+    return PacketUploadCreateResponse(**document)

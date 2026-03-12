@@ -63,3 +63,22 @@ class PacketSectionUpdateResponse(BaseModel):
     is_populated: bool
     document_count: int
     updated_at: datetime
+
+
+class PacketUploadCreateRequest(BaseModel):
+    section_key: str
+    filename: str
+    content_type: str
+    source: str
+
+
+class PacketUploadCreateResponse(BaseModel):
+    document_id: str
+    packet_id: str
+    section_key: str
+    filename: str
+    content_type: str
+    upload_status: str
+    upload_url: str
+    storage_key: str
+    created_at: datetime
