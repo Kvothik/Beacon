@@ -51,8 +51,12 @@ Complete repository tree (excluding `.git/`):
 │   │       └── test_packet.py
 │   ├── requirements.txt
 │   └── tools/
-│       └── discord_bridge.py
+│       ├── build_parole_board_datasets.py
+│       ├── discord_bridge.py
+│       └── seed_parole_board_data.py
 ├── datasets/
+│   ├── parole_board_offices.json
+│   └── parole_board_unit_mappings.json
 ├── docs/
 │   ├── agent_workflow.md
 │   ├── ai_engineering_rules.md

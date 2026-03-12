@@ -181,6 +181,10 @@ Query parameters:
 - `unit` (required)
 - `sid` (optional)
 
+Temporary development routing rule:
+- if the same unit appears under multiple upstream board offices, resolve to the first office in alphabetical order of `office_name`
+- this is a temporary placeholder rule only, until real TDCJ routing logic is implemented
+
 Response `200`:
 ```json
 {

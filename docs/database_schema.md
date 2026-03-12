@@ -86,6 +86,10 @@ Columns:
 - `created_at` timestamptz not null
 - `updated_at` timestamptz not null
 
+Temporary development routing rule:
+- if an upstream source maps the same unit to multiple board offices, select the first board office in alphabetical order of `office_name`
+- this is a temporary placeholder rule only, used so development can continue until real TDCJ routing logic is implemented
+
 ### packets
 
 Purpose:

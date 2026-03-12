@@ -1,0 +1,79 @@
+[
+  {
+    "office_code": "AUSTIN",
+    "office_name": "Austin Board Office",
+    "address_line_1": "4616 W. Howard Lane, Suite 200",
+    "address_line_2": null,
+    "city": "Austin",
+    "state": "TX",
+    "postal_code": "78728",
+    "phone": "512-671-2532",
+    "notes": null
+  },
+  {
+    "office_code": "AMARILLO",
+    "office_name": "Amarillo Board Office",
+    "address_line_1": "5809 S. Western, Suite 200",
+    "address_line_2": null,
+    "city": "Amarillo",
+    "state": "TX",
+    "postal_code": "79110",
+    "phone": "806-359-7656",
+    "notes": null
+  },
+  {
+    "office_code": "ANGLETON",
+    "office_name": "Angleton Board Office",
+    "address_line_1": "209 E. Mulberry, Suite 120",
+    "address_line_2": null,
+    "city": "Angleton",
+    "state": "TX",
+    "postal_code": "77515",
+    "phone": "713-982-9755",
+    "notes": null
+  },
+  {
+    "office_code": "GATESVILLE",
+    "office_name": "Gatesville Board Office",
+    "address_line_1": "545 State Hwy 36 Bypass N, Suite A",
+    "address_line_2": null,
+    "city": "Gatesville",
+    "state": "TX",
+    "postal_code": "76528",
+    "phone": "254-865-8870",
+    "notes": null
+  },
+  {
+    "office_code": "HUNTSVILLE",
+    "office_name": "Huntsville Board Office",
+    "address_line_1": "1022 Veterans Memorial Parkway, Suite A",
+    "address_line_2": null,
+    "city": "Huntsville",
+    "state": "TX",
+    "postal_code": "77320",
+    "phone": "936-291-2161",
+    "notes": null
+  },
+  {
+    "office_code": "PALESTINE",
+    "office_name": "Palestine Board Office",
+    "address_line_1": "1670 N. Hwy 155, Suite A",
+    "address_line_2": null,
+    "city": "Palestine",
+    "state": "TX",
+    "postal_code": "75803",
+    "phone": "903-723-1068",
+    "notes": null
+  },
+  {
+    "office_code": "SAN_ANTONIO",
+    "office_name": "San Antonio Board Office",
+    "address_line_1": "85 NE Loop 410, Suite 112",
+    "address_line_2": null,
+    "city": "San Antonio",
+    "state": "TX",
+    "postal_code": "78216",
+    "phone": "(210) 342-2012",
+    "notes": null
+  }
+]

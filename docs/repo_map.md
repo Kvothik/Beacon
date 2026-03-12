@@ -92,7 +92,9 @@ backend/
     versions/
       20260311_0001_mvp_schema.py
   tools/
+    build_parole_board_datasets.py
     discord_bridge.py
+    seed_parole_board_data.py
   app/
     main.py
 
@@ -145,6 +147,8 @@ infra/
     README.md
 
 datasets/
+  parole_board_offices.json
+  parole_board_unit_mappings.json
 ```
 
 ---

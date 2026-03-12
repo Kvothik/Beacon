@@ -21,8 +21,8 @@ It is ordered for MVP-first delivery, keeps P0 separate from later work, and is 
 
 ### Execution State
 
-- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`
-- current: `P0-05`
+- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`
+- current: `P0-06`
 
 ### P0-01. Lock documentation baseline and cross-document consistency
 
@@ -124,7 +124,7 @@ Issue shape:
 ### P0-05. Prepare parole board seed datasets and import path
 
 Status:
-- current
+- completed
 
 Scope:
 - create repository-backed datasets for parole board offices and unit-to-office mappings under `datasets/`
@@ -145,6 +145,9 @@ Issue shape:
 - backend
 
 ### P0-06. Implement authentication backend
+
+Status:
+- current
 
 Scope:
 - `POST /api/v1/auth/register`

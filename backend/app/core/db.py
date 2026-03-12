@@ -60,13 +60,16 @@ def get_engine() -> Engine:
     return _engine
 
 
-def get_session() -> Generator[Session, None, None]:
+def create_session() -> Session:
     if _session_factory is None:
         initialize_database()
     if _session_factory is None:
         raise RuntimeError("Database session factory is not initialized")
+    return _session_factory()
 
-    session = _session_factory()
+
+def get_session() -> Generator[Session, None, None]:
+    session = create_session()
     try:
         yield session
     finally:

@@ -1,0 +1,466 @@
+[
+  {
+    "unit_name": "Bridgeport Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Coleman (Private) Prison",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Coleman Work Facility",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Crain Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Halbert SAFPF",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Hamilton Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Hilltop Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Hobby Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Hughes Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Luther Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Marlin Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Memorial Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Middleton Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Murray Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "O'Daniel Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Pack Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "San Saba Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Sanders Estes Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Stevenson Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Stiles Unit",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Travis County State Jail",
+    "office_code": "AUSTIN"
+  },
+  {
+    "unit_name": "Allred Unit",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Baten ISF",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Clements Unit",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Dalhart Unit",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Daniel Unit",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Formby State Jail",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Fort Stockton Unit",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Jordan Unit",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Lynaugh Unit",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Mechler Unit",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Montford Unit",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Roach Unit",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Robertson Unit",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Rudd Unit",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Sanchez State Jail",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Smith Unit",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Wallace Unit",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Wheeler State Jail",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Wilderness 3 - San Angelo",
+    "office_code": "AMARILLO"
+  },
+  {
+    "unit_name": "Carole S. Young Medical Complex",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Clemens Unit",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Gib Lewis Unit",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Gist State Jail",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Goodman Unit",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Henley State Jail",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Hightower Unit",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Hospital - Galveston",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Jester III Unit",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "LeBlanc Unit",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Lychner State Jail",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Mac Stringfellow Unit",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Plane State Jail",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Ramsey Unit",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Scott Unit",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Terrell Unit",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Vance Unit",
+    "office_code": "ANGLETON"
+  },
+  {
+    "unit_name": "Bridgeport - Male & Female",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Choice Moore Unit",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Cole State Jail",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Crain Unit",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Havins Unit",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Hilltop Unit",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Hughes Unit",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Hutchins State Jail",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Kyle Unit",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Lindsey State Jail",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Memorial Unit",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Murray Unit",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "O'Daniel Unit",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Sayle SAFPF",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Stiles Unit",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Woodman State Jail",
+    "office_code": "GATESVILLE"
+  },
+  {
+    "unit_name": "Bell Unit",
+    "office_code": "HUNTSVILLE"
+  },
+  {
+    "unit_name": "Byrd Unit",
+    "office_code": "HUNTSVILLE"
+  },
+  {
+    "unit_name": "Diboll Unit",
+    "office_code": "HUNTSVILLE"
+  },
+  {
+    "unit_name": "Duncan Unit",
+    "office_code": "HUNTSVILLE"
+  },
+  {
+    "unit_name": "Ellis Unit",
+    "office_code": "HUNTSVILLE"
+  },
+  {
+    "unit_name": "Estelle Unit",
+    "office_code": "HUNTSVILLE"
+  },
+  {
+    "unit_name": "Ferguson Unit",
+    "office_code": "HUNTSVILLE"
+  },
+  {
+    "unit_name": "Goree Unit",
+    "office_code": "HUNTSVILLE"
+  },
+  {
+    "unit_name": "Holliday Unit",
+    "office_code": "HUNTSVILLE"
+  },
+  {
+    "unit_name": "Huntsville Unit",
+    "office_code": "HUNTSVILLE"
+  },
+  {
+    "unit_name": "Kegans State Jail",
+    "office_code": "HUNTSVILLE"
+  },
+  {
+    "unit_name": "Wainwright Unit",
+    "office_code": "HUNTSVILLE"
+  },
+  {
+    "unit_name": "Wynne Unit",
+    "office_code": "HUNTSVILLE"
+  },
+  {
+    "unit_name": "Federal (FCI)",
+    "office_code": "HUNTSVILLE"
+  },
+  {
+    "unit_name": "Beto Unit",
+    "office_code": "PALESTINE"
+  },
+  {
+    "unit_name": "Billy Moore Unit",
+    "office_code": "PALESTINE"
+  },
+  {
+    "unit_name": "Boyd Unit",
+    "office_code": "PALESTINE"
+  },
+  {
+    "unit_name": "Bradshaw State Jail",
+    "office_code": "PALESTINE"
+  },
+  {
+    "unit_name": "Coffield Unit",
+    "office_code": "PALESTINE"
+  },
+  {
+    "unit_name": "East Texas Treatment Facility",
+    "office_code": "PALESTINE"
+  },
+  {
+    "unit_name": "Gurney Unit",
+    "office_code": "PALESTINE"
+  },
+  {
+    "unit_name": "Hodge Unit",
+    "office_code": "PALESTINE"
+  },
+  {
+    "unit_name": "Johnston SAFPF",
+    "office_code": "PALESTINE"
+  },
+  {
+    "unit_name": "Michael Unit",
+    "office_code": "PALESTINE"
+  },
+  {
+    "unit_name": "Polunsky Unit",
+    "office_code": "PALESTINE"
+  },
+  {
+    "unit_name": "Powledge Unit",
+    "office_code": "PALESTINE"
+  },
+  {
+    "unit_name": "Skyview Unit",
+    "office_code": "PALESTINE"
+  },
+  {
+    "unit_name": "Telford Unit",
+    "office_code": "PALESTINE"
+  },
+  {
+    "unit_name": "Bartlett State Jail",
+    "office_code": "SAN_ANTONIO"
+  },
+  {
+    "unit_name": "Briscoe Unit",
+    "office_code": "SAN_ANTONIO"
+  },
+  {
+    "unit_name": "Chase Field",
+    "office_code": "SAN_ANTONIO"
+  },
+  {
+    "unit_name": "Connally Unit",
+    "office_code": "SAN_ANTONIO"
+  },
+  {
+    "unit_name": "Cotulla Unit",
+    "office_code": "SAN_ANTONIO"
+  },
+  {
+    "unit_name": "Dominguez State Jail",
+    "office_code": "SAN_ANTONIO"
+  },
+  {
+    "unit_name": "Garza East Unit",
+    "office_code": "SAN_ANTONIO"
+  },
+  {
+    "unit_name": "Garza West Unit",
+    "office_code": "SAN_ANTONIO"
+  },
+  {
+    "unit_name": "Glossbrenner SAFPF",
+    "office_code": "SAN_ANTONIO"
+  },
+  {
+    "unit_name": "Lopez State Jail",
+    "office_code": "SAN_ANTONIO"
+  },
+  {
+    "unit_name": "McConnell Unit",
+    "office_code": "SAN_ANTONIO"
+  },
+  {
+    "unit_name": "Ney State Jail",
+    "office_code": "SAN_ANTONIO"
+  },
+  {
+    "unit_name": "Segovia Unit",
+    "office_code": "SAN_ANTONIO"
+  },
+  {
+    "unit_name": "Torres Unit",
+    "office_code": "SAN_ANTONIO"
+  },
+  {
+    "unit_name": "Willacy County State Jail",
+    "office_code": "SAN_ANTONIO"
+  }
+]
