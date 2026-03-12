@@ -89,6 +89,7 @@ mobile/
 
     types/
       api.ts
+      auth.ts
       packet.ts
       offender.ts
 

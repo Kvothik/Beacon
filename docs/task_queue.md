@@ -21,8 +21,8 @@ It is ordered for MVP-first delivery, keeps P0 separate from later work, and is 
 
 ### Execution State
 
-- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`, `P0-06`
-- current: `P0-07`
+- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`, `P0-06`, `P0-07`
+- current: `P0-08`
 
 ### P0-01. Lock documentation baseline and cross-document consistency
 
@@ -171,7 +171,7 @@ Issue shape:
 ### P0-07. Implement mobile authentication flow
 
 Status:
-- current
+- completed
 
 Scope:
 - login screen
@@ -192,6 +192,9 @@ Issue shape:
 - auth
 
 ### P0-08. Implement TDCJ lookup adapter and parser core
+
+Status:
+- current
 
 Scope:
 - implement backend adapter boundary in `backend/app/services/tdcj_lookup_service.py`

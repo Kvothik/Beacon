@@ -122,6 +122,7 @@ Complete repository tree (excluding `.git/`):
 │   │   │   └── packetStore.ts
 │   │   └── types/
 │   │       ├── api.ts
+│   │       ├── auth.ts
 │   │       ├── offender.ts
 │   │       └── packet.ts
 │   └── tsconfig.json
