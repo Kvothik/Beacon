@@ -56,6 +56,7 @@ Complete repository tree (excluding `.git/`):
 │   ├── scanner_implementation.md
 │   ├── system_invariants.md
 │   ├── task_queue.md
+│   ├── github_issue_board_plan.md
 │   ├── tdcj_html_parser_spec.md
 │   └── tdcj_lookup_adapter.md
 ├── infra/
@@ -64,7 +65,9 @@ Complete repository tree (excluding `.git/`):
 │   └── docker/
 │       └── Dockerfile.backend
 ├── mobile/
+│   ├── App.tsx
 │   ├── app.json
+│   ├── package-lock.json
 │   ├── package.json
 │   ├── src/
 │   │   ├── components/

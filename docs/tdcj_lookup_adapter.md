@@ -242,15 +242,15 @@ Example:
   "race": "W",
   "gender": "M",
   "age": 52,
-  "facility": "ELLIS",
+  "current_facility": "ELLIS",
   "projected_release_date": "2041-12-10",
   "parole_eligibility_date": "2031-12-10",
   "visitation_eligible": true,
-  "offenses": []
+  "offense_history": []
 }
 ```
 
-Offenses:
+Offense history rows:
 
 ```json
 {
@@ -259,7 +259,7 @@ Offenses:
   "sentence_date": "",
   "county": "",
   "case_number": "",
-  "sentence": ""
+  "sentence_length": ""
 }
 ```
 

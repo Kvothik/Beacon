@@ -34,12 +34,15 @@ docs/
   error_policy.md
   system_invariants.md
   task_queue.md
+  github_issue_board_plan.md
   tdcj_lookup_adapter.md
   tdcj_html_parser_spec.md
 
 mobile/
+  App.tsx
   app.json
   package.json
+  package-lock.json
   tsconfig.json
   src/
     navigation/

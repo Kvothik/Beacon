@@ -12,6 +12,7 @@ This document defines the required execution order for autonomous implementation
 - Read only the docs and source files required for the current task.
 - Do not create endpoints, tables, packet sections, or PDF behaviors not documented in the specs.
 - If file structure changes, update `docs/repo_map.md` in the same change set.
+- After completing work for an issue, push the corresponding committed changes to GitHub before starting the next issue.
 - If a requested change conflicts with `system_invariants.md`, stop and ask.
 
 ## 3. Required Build Order
@@ -160,7 +161,16 @@ When multiple tasks are available, select the highest-priority unfinished item t
 
 Prefer foundational backend and contract work before UI polish.
 
-## 5. Validation Rules
+## 5. Discord Remote Response Rule
+
+When operating through the developer Discord bridge:
+
+- return the full answer as **one single consolidated message** whenever reasonably possible
+- avoid fragmented follow-up messages for the same response unless the human explicitly asks for chunking
+- prefer copy/paste-friendly formatting with short sections and bullets
+- if the response would be very long, compress it rather than splitting it into multiple Discord messages
+
+## 6. Validation Rules
 
 ### For documentation-only changes
 - check cross-document consistency
@@ -177,7 +187,7 @@ Prefer foundational backend and contract work before UI polish.
 - validate touched screens and flows only
 - ensure mobile logic does not absorb backend business rules
 
-## 6. Stop Conditions
+## 7. Stop Conditions
 
 Stop and report a blocker when:
 
@@ -187,7 +197,7 @@ Stop and report a blocker when:
 - a change would violate `system_invariants.md`
 - the current task exceeds configured time/token limits without stable progress
 
-## 7. Out of Scope Until Explicitly Reprioritized
+## 8. Out of Scope Until Explicitly Reprioritized
 
 Do not implement before P0 completion:
 
