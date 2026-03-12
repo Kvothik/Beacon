@@ -34,14 +34,14 @@ export default function PacketBuilderScreen({ navigation }: NativeStackScreenPro
 
       <View style={styles.panel}>
         <Text style={styles.sectionTitle}>Packet Sections</Text>
-        <Text style={styles.sectionDescription}>Section order follows `docs/pdf_spec.md`. Completion state is shown now; editing and uploads come in later issues.</Text>
+        <Text style={styles.sectionDescription}>Open a section to edit notes and completion state. Uploads and scanner attachments arrive in later issues.</Text>
         <View style={styles.list}>
           {sections.map((section) => (
             <SectionCard
               key={section.section_key}
               title={section.title}
               description={`Section ${section.sort_order} of ${totalCount} • ${section.is_populated ? 'Complete' : 'Not started'}`}
-              onPress={activePacket ? () => navigation.navigate('SectionDetail') : undefined}
+              onPress={activePacket ? () => navigation.navigate('SectionDetail', { sectionKey: section.section_key }) : undefined}
             />
           ))}
         </View>

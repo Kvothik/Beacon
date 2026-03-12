@@ -13,13 +13,14 @@ import RegisterScreen from '../screens/RegisterScreen';
 import ReviewScreen from '../screens/ReviewScreen';
 import ScannerScreen from '../screens/ScannerScreen';
 import SectionDetailScreen from '../screens/SectionDetailScreen';
+import type { PacketSectionKey } from '../types/packet';
 
 export type AppStackParamList = {
   Login: undefined;
   Register: undefined;
   Home: undefined;
   PacketBuilder: undefined;
-  SectionDetail: undefined;
+  SectionDetail: { sectionKey: PacketSectionKey };
   Scanner: undefined;
   Review: undefined;
   PdfPreview: undefined;
