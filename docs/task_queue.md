@@ -21,8 +21,8 @@ It is ordered for MVP-first delivery, keeps P0 separate from later work, and is 
 
 ### Execution State
 
-- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`, `P0-06`, `P0-07`, `P0-08`, `P0-09`, `P0-10`, `P0-11`, `P0-12`, `P0-13`, `P0-14`, `P0-15`, `P0-16`, `P0-17`, `P0-18`, `P0-19`, `P0-20`, `P0-22`, `P0-23`, `P0-24`
-- current: `P0-25`
+- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`, `P0-06`, `P0-07`, `P0-08`, `P0-09`, `P0-10`, `P0-11`, `P0-12`, `P0-13`, `P0-14`, `P0-15`, `P0-16`, `P0-17`, `P0-18`, `P0-19`, `P0-20`, `P0-22`, `P0-23`, `P0-24`, `P0-25`
+- current: `P0-26`
 
 ### P0-01. Lock documentation baseline and cross-document consistency
 
@@ -568,7 +568,7 @@ Issue shape:
 ### P0-25. Implement backend packet readiness validation
 
 Status:
-- current
+- completed
 
 Scope:
 - packet readiness validation logic for required sections, uploads, and cover letter prerequisites
@@ -585,6 +585,9 @@ Issue shape:
 - validation
 
 ### P0-26. Implement mobile completion validation messaging
+
+Status:
+- current
 
 Scope:
 - user-facing validation messaging for incomplete packet state

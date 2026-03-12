@@ -362,15 +362,50 @@ class PacketRouterTests(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["error"]["code"], "forbidden")
 
+    def test_get_readiness_reports_missing_items_before_packet_is_ready(self) -> None:
+        token = register_and_get_token(self.client)
+        body = create_packet(self.client, token, sid="99999996")
+
+        response = self.client.get(
+            f"/api/v1/packets/{body['id']}/readiness",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        readiness = response.json()
+        self.assertFalse(readiness["is_ready"])
+        self.assertIn("cover_letter", readiness["missing_items"])
+        self.assertIn("section:photos", readiness["missing_items"])
+
     def test_post_pdf_generates_pdf_url_when_packet_ready(self) -> None:
         token = register_and_get_token(self.client)
         body = create_packet(self.client, token, sid="99999996")
         create_cover_letter(self.client, token, body["id"])
-        self.client.patch(
-            f"/api/v1/packets/{body['id']}/sections/reflection_letter",
-            json={"notes_text": "Ready for review.", "is_populated": True},
-            headers={"Authorization": f"Bearer {token}"},
-        )
+
+        for section_key in (
+            "photos",
+            "support_letters",
+            "reflection_letter",
+            "certificates_and_education",
+            "future_employment",
+            "parole_plan",
+            "court_and_case_documents",
+            "other_miscellaneous",
+        ):
+            self.client.patch(
+                f"/api/v1/packets/{body['id']}/sections/{section_key}",
+                json={"notes_text": f"{section_key} complete", "is_populated": True},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            self.client.post(
+                f"/api/v1/packets/{body['id']}/uploads",
+                json={
+                    "section_key": section_key,
+                    "filename": f"{section_key}.jpg",
+                    "content_type": "image/jpeg",
+                    "source": "upload",
+                },
+                headers={"Authorization": f"Bearer {token}"},
+            )
 
         response = self.client.post(
             f"/api/v1/packets/{body['id']}/pdf",
@@ -383,7 +418,7 @@ class PacketRouterTests(unittest.TestCase):
         self.assertIn("/final-packet.pdf", pdf["pdf_url"])
         self.assertIn("generated_at", pdf)
 
-    def test_post_pdf_requires_cover_letter(self) -> None:
+    def test_post_pdf_requires_ready_packet_state(self) -> None:
         token = register_and_get_token(self.client)
         body = create_packet(self.client, token, sid="99999995")
         self.client.patch(
@@ -398,6 +433,19 @@ class PacketRouterTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["error"]["code"], "validation_error")
+        self.assertIn("missing_items", response.json()["error"]["details"])
+
+    def test_get_readiness_enforces_ownership(self) -> None:
+        owner_token = register_and_get_token(self.client, prefix="ownerready")
+        other_token = register_and_get_token(self.client, prefix="otherready")
+        body = create_packet(self.client, owner_token, sid="99999993")
+
+        response = self.client.get(
+            f"/api/v1/packets/{body['id']}/readiness",
+            headers={"Authorization": f"Bearer {other_token}"},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["error"]["code"], "forbidden")
 
     def test_post_pdf_enforces_ownership(self) -> None:
         owner_token = register_and_get_token(self.client, prefix="ownerpdf")

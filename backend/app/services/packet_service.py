@@ -315,18 +315,11 @@ def generate_cover_letter(
 
 
 def generate_packet_pdf(session: Session, *, current_user: User, packet_id: UUID) -> dict[str, Any]:
+    readiness = get_packet_readiness(session, current_user=current_user, packet_id=packet_id)
+    if not readiness['is_ready']:
+        raise ApiError(400, 'validation_error', 'Packet PDF generation requires a ready packet.', details={'missing_items': readiness['missing_items']})
+
     packet = session.get(Packet, packet_id)
-    if packet is None:
-        raise ApiError(404, 'packet_not_found', 'No packet was found for that id.')
-    if packet.user_id != current_user.id:
-        raise ApiError(403, 'forbidden', 'You do not have access to that packet.')
-    if not packet.cover_letter_text:
-        raise ApiError(400, 'validation_error', 'Packet PDF generation requires a cover letter.', details={'fields': ['cover_letter_text']})
-
-    sections = session.scalars(select(PacketSection).where(PacketSection.packet_id == packet.id)).all()
-    if not any(section.is_populated for section in sections):
-        raise ApiError(400, 'validation_error', 'Packet PDF generation requires at least one populated section.', details={'fields': ['sections']})
-
     packet.status = 'ready'
     packet.generated_pdf_key = f"packets/{packet.id}/final-packet.pdf"
     packet.pdf_generated_at = datetime.now(timezone.utc)
@@ -338,6 +331,32 @@ def generate_packet_pdf(session: Session, *, current_user: User, packet_id: UUID
         'status': packet.status,
         'pdf_url': f"{PDF_URL_PREFIX}/{packet.id}/final-packet.pdf",
         'generated_at': packet.pdf_generated_at,
+    }
+
+
+def get_packet_readiness(session: Session, *, current_user: User, packet_id: UUID) -> dict[str, Any]:
+    packet = session.get(Packet, packet_id)
+    if packet is None:
+        raise ApiError(404, 'packet_not_found', 'No packet was found for that id.')
+    if packet.user_id != current_user.id:
+        raise ApiError(403, 'forbidden', 'You do not have access to that packet.')
+
+    sections = session.scalars(select(PacketSection).where(PacketSection.packet_id == packet.id).order_by(PacketSection.sort_order)).all()
+    document_counts = _document_counts_by_section(session, packet.id)
+    missing_items: list[str] = []
+    if not packet.cover_letter_text:
+        missing_items.append('cover_letter')
+    for section in sections:
+        if not section.is_populated:
+            missing_items.append(f'section:{section.section_key}')
+        if document_counts.get(section.id, 0) == 0:
+            missing_items.append(f'documents:{section.section_key}')
+
+    return {
+        'packet_id': str(packet.id),
+        'is_ready': len(missing_items) == 0,
+        'missing_items': missing_items,
+        'updated_at': packet.updated_at,
     }
 
 

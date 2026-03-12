@@ -15,6 +15,7 @@ from backend.app.schemas.packet import (
     PacketCreateResponse,
     PacketDetailResponse,
     PacketPdfGenerateResponse,
+    PacketReadinessResponse,
     PacketSectionUpdateRequest,
     PacketSectionUpdateResponse,
     PacketUploadCreateRequest,
@@ -26,6 +27,7 @@ from backend.app.services.packet_service import (
     generate_cover_letter,
     generate_packet_pdf,
     get_packet_detail,
+    get_packet_readiness,
     update_packet_section,
 )
 
@@ -115,6 +117,16 @@ def create_packet_cover_letter(
         sender_relationship=payload.sender_relationship,
     )
     return PacketCoverLetterResponse(**cover_letter)
+
+
+@router.get("/{packet_id}/readiness", response_model=PacketReadinessResponse)
+def read_packet_readiness(
+    packet_id: UUID,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_authenticated_user),
+) -> PacketReadinessResponse:
+    readiness = get_packet_readiness(session, current_user=current_user, packet_id=packet_id)
+    return PacketReadinessResponse(**readiness)
 
 
 @router.post("/{packet_id}/pdf", response_model=PacketPdfGenerateResponse)

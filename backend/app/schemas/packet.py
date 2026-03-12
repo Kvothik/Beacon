@@ -102,3 +102,10 @@ class PacketPdfGenerateResponse(BaseModel):
     status: str
     pdf_url: str
     generated_at: datetime
+
+
+class PacketReadinessResponse(BaseModel):
+    packet_id: str
+    is_ready: bool
+    missing_items: list[str]
+    updated_at: datetime
