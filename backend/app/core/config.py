@@ -11,6 +11,8 @@ class Settings:
     environment: str = os.getenv("BEACON_ENV", "development")
     debug: bool = os.getenv("BEACON_DEBUG", "false").lower() == "true"
     database_url: str = os.getenv("BEACON_DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/beacon")
+    auth_secret: str = os.getenv("BEACON_AUTH_SECRET", "beacon-dev-auth-secret")
+    auth_token_ttl_seconds: int = int(os.getenv("BEACON_AUTH_TOKEN_TTL_SECONDS", "86400"))
 
 
 settings = Settings()

@@ -1,3 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-router = APIRouter(prefix="/offenders", tags=["offenders"])
+from backend.app.core.security import require_authenticated_user
+
+router = APIRouter(prefix="/offenders", tags=["offenders"], dependencies=[Depends(require_authenticated_user)])

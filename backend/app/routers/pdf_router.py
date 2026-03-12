@@ -1,3 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-router = APIRouter(prefix="/packets", tags=["pdf"])
+from backend.app.core.security import require_authenticated_user
+
+router = APIRouter(prefix="/packets", tags=["pdf"], dependencies=[Depends(require_authenticated_user)])
