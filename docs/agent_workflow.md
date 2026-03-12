@@ -210,3 +210,34 @@ Do not implement before P0 completion:
 - analytics dashboards
 - collaboration
 - advanced notifications beyond documented MVP needs
+
+## 9. Multi-Agent Execution Model
+
+Sixx orchestrates work and reviews outcomes.
+Forge implements backend tasks.
+Atlas implements mobile tasks.
+
+Rules:
+- one agent per issue
+- no cross-ownership edits
+- architecture changes route through Sixx
+- no agent spawning
+
+Execution model:
+- Sixx assigns issues
+- Forge handles backend issues
+- Atlas handles mobile issues
+
+Each issue completion requires:
+1. implementation
+2. local verification
+3. GitHub issue comment with summary
+4. label `status:complete`
+5. close issue
+6. commit referencing issue
+
+Commit rules:
+- Forge and Atlas may not commit directly to main
+- all commits must reference the GitHub issue number
+- all commits must be reviewed or finalized through Sixx
+- commit message format: `type: description (#issue)`

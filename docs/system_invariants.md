@@ -134,3 +134,23 @@ If real-world source data is ambiguous but development must continue, the agent 
 - the temporary rule does not invent new product scope beyond the existing docs
 - a follow-up GitHub issue is created to replace the temporary rule with the real logic
 - the temporary rule is treated as a placeholder, not a final business rule
+
+## 14. Agent Ownership Boundaries
+
+Sixx:
+- `docs/**`
+- `repo_map.md`
+- architecture
+
+Forge:
+- `backend/**`
+- `datasets/**`
+
+Atlas:
+- `mobile/**`
+
+Rules:
+- agents must not modify files outside their ownership area unless coordinated through Sixx
+- architecture, schema, or API contract changes must be approved through Sixx
+- agents must not spawn additional agents
+- only one agent may own a GitHub issue
