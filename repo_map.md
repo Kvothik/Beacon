@@ -5,6 +5,12 @@ Complete repository tree (excluding `.git/`):
 ```text
 .
 ├── .gitignore
+├── README.md
+├── agents/
+│   ├── builder_agent.md
+│   ├── overseer_agent.md
+│   ├── planner_agent.md
+│   └── verifier_agent.md
 ├── backend/
 │   ├── alembic/
 │   │   ├── env.py
@@ -58,6 +64,8 @@ Complete repository tree (excluding `.git/`):
 │   ├── parole_board_offices.json
 │   └── parole_board_unit_mappings.json
 ├── docs/
+│   ├── agent_architecture.md
+│   ├── agent_execution_rules.md
 │   ├── agent_workflow.md
 │   ├── ai_engineering_rules.md
 │   ├── api_contracts.md

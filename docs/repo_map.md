@@ -19,12 +19,21 @@ If new files are created, renamed, or removed as part of implementation, this ma
 
 ```
 .gitignore
+README.md
 repo_map.md
+
+agents/
+  overseer_agent.md
+  planner_agent.md
+  builder_agent.md
+  verifier_agent.md
 
 docs/
   northstar.md
   repo_map.md
   ai_engineering_rules.md
+  agent_architecture.md
+  agent_execution_rules.md
   agent_workflow.md
   feature_priority.md
   api_contracts.md
