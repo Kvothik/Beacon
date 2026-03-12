@@ -262,6 +262,75 @@ def create_packet_upload(
     }
 
 
+def generate_cover_letter(
+    session: Session,
+    *,
+    current_user: User,
+    packet_id: UUID,
+    sender_name: str,
+    sender_phone: str,
+    sender_email: str,
+    sender_relationship: str,
+) -> dict[str, Any]:
+    packet = session.get(Packet, packet_id)
+    if packet is None:
+        raise ApiError(404, "packet_not_found", "No packet was found for that id.")
+    if packet.user_id != current_user.id:
+        raise ApiError(403, "forbidden", "You do not have access to that packet.")
+
+    offender = session.get(Offender, packet.offender_id)
+    if offender is None:
+        raise ApiError(500, "internal_error", "Packet offender snapshot is missing.")
+    if packet.parole_board_office_id is None:
+        raise ApiError(404, "not_found", "No parole board office is associated with that packet.")
+
+    office = session.get(ParoleBoardOffice, packet.parole_board_office_id)
+    if office is None:
+        raise ApiError(404, "not_found", "No parole board office is associated with that packet.")
+
+    payload = {
+        'sender_name': sender_name.strip(),
+        'sender_phone': sender_phone.strip(),
+        'sender_email': sender_email.strip(),
+        'sender_relationship': sender_relationship.strip(),
+    }
+    missing_fields = [field for field, value in payload.items() if not value]
+    if missing_fields:
+        raise ApiError(400, 'validation_error', 'Request validation failed.', details={'fields': missing_fields})
+
+    packet.sender_name = payload['sender_name']
+    packet.sender_phone = payload['sender_phone']
+    packet.sender_email = payload['sender_email']
+    packet.sender_relationship = payload['sender_relationship']
+    packet.cover_letter_text = _render_cover_letter(packet, offender, office)
+    session.commit()
+    session.refresh(packet)
+
+    return {
+        'packet_id': str(packet.id),
+        'cover_letter_text': packet.cover_letter_text,
+        'updated_at': packet.updated_at,
+    }
+
+
+def _render_cover_letter(packet: Packet, offender: Offender, office: ParoleBoardOffice) -> str:
+    lines = [
+        f"To: {office.office_name}",
+        f"Re: Support for {offender.name} (SID {offender.sid})",
+        '',
+        f"My name is {packet.sender_name}, and I am {packet.sender_relationship} to {offender.name}.",
+        'I am writing to respectfully support this parole packet and to provide information about the support available upon release.',
+        'This letter is intended to reflect accountability, stability, and community support rather than to relitigate the underlying offense.',
+        '',
+        f"I can be reached at {packet.sender_phone} or {packet.sender_email} if additional information is needed.",
+        '',
+        'Thank you for your time and consideration.',
+        '',
+        packet.sender_name,
+    ]
+    return '\n'.join(lines)
+
+
 def _document_counts_by_section(session: Session, packet_id: UUID) -> dict[UUID, int]:
     return {
         section_id: count

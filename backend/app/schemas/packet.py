@@ -82,3 +82,16 @@ class PacketUploadCreateResponse(BaseModel):
     upload_url: str
     storage_key: str
     created_at: datetime
+
+
+class PacketCoverLetterRequest(BaseModel):
+    sender_name: str
+    sender_phone: str
+    sender_email: str
+    sender_relationship: str
+
+
+class PacketCoverLetterResponse(BaseModel):
+    packet_id: str
+    cover_letter_text: str
+    updated_at: datetime

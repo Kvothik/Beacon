@@ -9,6 +9,8 @@ from backend.app.core.db import get_session
 from backend.app.core.security import require_authenticated_user
 from backend.app.models.user import User
 from backend.app.schemas.packet import (
+    PacketCoverLetterRequest,
+    PacketCoverLetterResponse,
     PacketCreateRequest,
     PacketCreateResponse,
     PacketDetailResponse,
@@ -17,7 +19,13 @@ from backend.app.schemas.packet import (
     PacketUploadCreateRequest,
     PacketUploadCreateResponse,
 )
-from backend.app.services.packet_service import create_packet, create_packet_upload, get_packet_detail, update_packet_section
+from backend.app.services.packet_service import (
+    create_packet,
+    create_packet_upload,
+    generate_cover_letter,
+    get_packet_detail,
+    update_packet_section,
+)
 
 router = APIRouter(prefix="/packets", tags=["packets"], dependencies=[Depends(require_authenticated_user)])
 
@@ -86,3 +94,22 @@ def create_packet_upload_record(
         source=payload.source,
     )
     return PacketUploadCreateResponse(**document)
+
+
+@router.post("/{packet_id}/cover-letter", response_model=PacketCoverLetterResponse)
+def create_packet_cover_letter(
+    packet_id: UUID,
+    payload: PacketCoverLetterRequest,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_authenticated_user),
+) -> PacketCoverLetterResponse:
+    cover_letter = generate_cover_letter(
+        session,
+        current_user=current_user,
+        packet_id=packet_id,
+        sender_name=payload.sender_name,
+        sender_phone=payload.sender_phone,
+        sender_email=payload.sender_email,
+        sender_relationship=payload.sender_relationship,
+    )
+    return PacketCoverLetterResponse(**cover_letter)

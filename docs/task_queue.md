@@ -21,8 +21,8 @@ It is ordered for MVP-first delivery, keeps P0 separate from later work, and is 
 
 ### Execution State
 
-- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`, `P0-06`, `P0-07`, `P0-08`, `P0-09`, `P0-10`, `P0-11`, `P0-12`, `P0-13`, `P0-14`
-- current: `P0-15`
+- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`, `P0-06`, `P0-07`, `P0-08`, `P0-09`, `P0-10`, `P0-11`, `P0-12`, `P0-13`, `P0-14`, `P0-15`, `P0-16`, `P0-17`, `P0-18`, `P0-19`, `P0-20`, `P0-22`
+- current: `P0-23`
 
 ### P0-01. Lock documentation baseline and cross-document consistency
 
@@ -515,109 +515,160 @@ Issue shape:
 - review
 - export
 
-### P0-22. Add backend tests for authentication and authorization
+### P0-22. Implement backend cover letter generation
+
+Status:
+- completed
 
 Scope:
-- registration/login/me happy paths
-- invalid credentials and unauthorized access
-- protected endpoint enforcement
+- generate a deterministic cover letter for the packet using sender information plus offender and parole board office data
+- keep language respectful, accountability-oriented, and safe for MVP use
 
 Dependencies:
-- P0-06
-
-Blocks:
-- MVP hardening completion
+- P0-15
 
 Issue shape:
-- testing
-- backend
-- auth
-
-### P0-23. Add backend tests for TDCJ parsing and offender normalization
-
-Scope:
-- search result parsing
-- SID extraction
-- detail page normalization
-- parser mismatch and upstream failure handling
-- contract-level response shape validation for lookup endpoints
-
-Dependencies:
-- P0-08
-- P0-09
-
-Blocks:
-- MVP hardening completion
-
-Issue shape:
-- testing
-- backend
-- integration
-
-### P0-24. Add backend tests for packets, uploads, and PDF rules
-
-Scope:
-- packet creation and section initialization order
-- section update and review readiness behavior
-- upload initiation/completion persistence
-- PDF ordering, divider insertion, and failure rules
-
-Dependencies:
-- P0-13
-- P0-14
-- P0-16
-- P0-19
-- P0-20
-
-Blocks:
-- MVP hardening completion
-
-Issue shape:
-- testing
 - backend
 - pdf
 
-### P0-25. MVP hardening for mobile loading, retry, and error states
+### P0-23. Implement backend packet PDF assembly
+
+Status:
+- current
 
 Scope:
-- consistent retry behavior for retryable backend failures
-- better loading/error states across auth, lookup, uploads, scanner, review, and export
-- final UX polish limited to documented MVP scope
+- generate the final packet PDF including cover letter, section dividers, section content, and uploaded documents
 
 Dependencies:
-- P0-07
-- P0-10
-- P0-12
-- P0-15
-- P0-17
-- P0-18
-- P0-21
-- `error_policy.md`
+- P0-22
 
-Blocks:
-- final MVP acceptance
+Issue shape:
+- backend
+- pdf
+
+
+### P0-24. Implement mobile packet review screen
+
+Scope:
+- mobile packet review screen summarizing packet sections, uploads, and cover letter state
+- clear read-only review before final validation/export
+
+Dependencies:
+- P0-18
+- P0-19
+- P0-22
 
 Issue shape:
 - mobile
-- hardening
+- review
 
-### P0-26. End-to-end MVP validation pass
+### P0-25. Implement backend packet readiness validation
 
 Scope:
-- validate complete user path: register → login → offender lookup → office lookup → packet creation → section editing → upload/scan → cover letter → review → PDF export
-- confirm conformance to documented API contracts, schema limits, PDF ordering, scanner behavior, and system invariants
-- capture remaining doc/code mismatches as follow-up issues only if within documented scope
+- packet readiness validation logic for required sections, uploads, and cover letter prerequisites
+- structured readiness result for downstream review/export UX
 
 Dependencies:
-- all prior P0 tasks
-
-Blocks:
-- P1 work
+- P0-17
+- P0-19
+- P0-22
+- P0-23
 
 Issue shape:
-- testing
+- backend
+- validation
+
+### P0-26. Implement mobile completion validation messaging
+
+Scope:
+- user-facing validation messaging for incomplete packet state
+- clear blocking vs non-blocking readiness feedback in the mobile flow
+
+Dependencies:
+- P0-24
+- P0-25
+
+Issue shape:
+- mobile
+- validation
+
+### P0-27. Implement mobile PDF generation trigger
+
+Scope:
+- trigger final PDF generation from the mobile app
+- reflect backend generation state and final readiness transitions
+
+Dependencies:
+- P0-23
+- P0-24
+- P0-25
+
+Issue shape:
+- mobile
+- pdf
+
+### P0-28. Implement backend error handling hardening
+
+Scope:
+- tighten structured error handling across MVP packet, upload, validation, and PDF flows
+- ensure retryability and user-safe error behavior remain consistent with `error_policy.md`
+
+Dependencies:
+- P0-19
+- P0-22
+- P0-23
+
+Issue shape:
+- backend
+- hardening
+
+### P0-29. Implement upload size and file-type guardrails
+
+Scope:
+- enforce upload size and file-type guardrails
+- return structured validation failures for unsupported uploads
+
+Dependencies:
+- P0-19
+
+Issue shape:
+- backend
+- uploads
+
+### P0-30. Implement packet completion UX improvements
+
+Scope:
+- improve final packet completion UX for review, readiness messaging, and handoff toward export
+- stay within documented MVP scope only
+
+Dependencies:
+- P0-24
+- P0-25
+- P0-26
+- P0-27
+
+Issue shape:
+- mobile
+- ux
+
+### P0-31. Execute end-to-end acceptance test pass
+
+Scope:
+- run end-to-end MVP acceptance validation across the documented packet flow
+- capture any remaining MVP mismatches as follow-up docs/issues only
+
+Dependencies:
+- P0-24
+- P0-25
+- P0-26
+- P0-27
+- P0-28
+- P0-29
+- P0-30
+
+Issue shape:
 - qa
-- docs
+- acceptance
 
 ## 4. Later Work (Blocked Until P0 Completion)
 

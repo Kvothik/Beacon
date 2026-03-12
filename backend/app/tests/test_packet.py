@@ -290,3 +290,70 @@ class PacketRouterTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["error"]["code"], "forbidden")
+
+    def test_post_cover_letter_generates_respectful_template(self) -> None:
+        token = register_and_get_token(self.client)
+        body = create_packet(self.client, token, sid="99999998")
+
+        response = self.client.post(
+            f"/api/v1/packets/{body['id']}/cover-letter",
+            json={
+                "sender_name": "Jane Doe",
+                "sender_phone": "512-555-0100",
+                "sender_email": "jane@example.com",
+                "sender_relationship": "sister",
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        letter = response.json()
+        self.assertEqual(letter["packet_id"], body["id"])
+        self.assertIn("Jane Doe", letter["cover_letter_text"])
+        self.assertIn("SMITH,J C", letter["cover_letter_text"])
+        self.assertIn("Huntsville Board Office", letter["cover_letter_text"])
+        self.assertIn("respectfully support this parole packet", letter["cover_letter_text"])
+        self.assertIn("accountability", letter["cover_letter_text"])
+        self.assertIn("updated_at", letter)
+
+    def test_post_cover_letter_requires_associated_board_office(self) -> None:
+        token = register_and_get_token(self.client)
+        response = self.client.post(
+            "/api/v1/packets",
+            json={
+                "offender_sid": "12312312",
+                "offender_name": "SMITH,J C",
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        packet_id = response.json()["id"]
+
+        cover = self.client.post(
+            f"/api/v1/packets/{packet_id}/cover-letter",
+            json={
+                "sender_name": "Jane Doe",
+                "sender_phone": "512-555-0100",
+                "sender_email": "jane@example.com",
+                "sender_relationship": "sister",
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(cover.status_code, 404)
+        self.assertEqual(cover.json()["error"]["code"], "not_found")
+
+    def test_post_cover_letter_enforces_ownership(self) -> None:
+        owner_token = register_and_get_token(self.client, prefix="ownercover")
+        other_token = register_and_get_token(self.client, prefix="othercover")
+        body = create_packet(self.client, owner_token, sid="99999997")
+
+        response = self.client.post(
+            f"/api/v1/packets/{body['id']}/cover-letter",
+            json={
+                "sender_name": "Jane Doe",
+                "sender_phone": "512-555-0100",
+                "sender_email": "jane@example.com",
+                "sender_relationship": "sister",
+            },
+            headers={"Authorization": f"Bearer {other_token}"},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["error"]["code"], "forbidden")
