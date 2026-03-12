@@ -30,20 +30,29 @@ Primary source docs:
 - `docs/system_invariants.md`
 - `docs/task_queue.md`
 - `docs/agent_workflow.md`
+- `docs/execution_router.md`
 
 ## 2. Current Agent Structure
 
-- Sixx = orchestrator / execution gateway
+- Sixx = orchestrator / execution gateway / direct planner
 - Forge = backend implementation agent
 - Atlas = mobile implementation agent
-- Shepherd = supervisor planner
+- Shepherd = supervisor planner (inactive / standby)
 - Sentinel = QA and verification agent
+
+Agent model assignments:
+- Sixx -> `gpt-5-mini`
+- Sentinel -> `gpt-5-mini`
+- Shepherd -> `gpt-5-mini` (standby)
+- Forge -> `gpt-5.4`
+- Atlas -> `gpt-5.4`
 
 Role summary:
 - Sixx owns architecture decisions, docs, issue coordination, review, execution control, and message routing between agents and the human
 - Forge implements backend and dataset tasks only
 - Atlas implements mobile tasks only
-- Shepherd inspects state, recommends next steps, drafts commands, stays ready to propose the next step when work completes or the system becomes idle, and does not execute work
+- Sixx performs next-step planning directly using `docs/task_queue.md`, GitHub issue state, and project board state
+- Shepherd is inactive / standby and is not part of the active execution loop unless explicitly re-enabled
 - Sentinel audits completed work for regressions, drift, and missing verification, and remains advisory unless explicitly approved otherwise
 
 Ownership boundaries:
@@ -62,11 +71,10 @@ Issue lifecycle:
 4. Local verification must pass before review handoff
 5. Sixx moves the issue/card to `DELIVERED`
 6. Sentinel reviews and either ACCEPTS or REJECTS
-7. Sixx forwards Sentinel's minimal review result to Shepherd
-8. Shepherd determines the next recommended issue
-9. Sixx relays the result to the user and waits for approval before the next implementation begins
-10. Final commits to `main` are controlled by Sixx and must reference the issue number
-11. Sixx must push the relevant commits to the GitHub repository before reporting an issue as fully completed
+7. Sixx determines the next recommended issue directly using `docs/execution_router.md`, GitHub issue state, and project board state
+8. Sixx relays the result to the user and waits for approval before the next implementation begins
+9. Final commits to `main` are controlled by Sixx and must reference the issue number
+10. Sixx must push the relevant commits to the GitHub repository before reporting an issue as fully completed
 
 Rules:
 - one agent per issue
@@ -136,6 +144,7 @@ Shepherd and Sentinel may send status or recommendation messages to the user onl
 Forge and Atlas do not message the user directly unless routed through Sixx.
 
 After Sentinel review, Sixx must first relay the Sentinel result to the user immediately.
+The relayed review must include the evidence-based checks Sentinel performed.
 
 Then Sixx must send two Discord messages to the user:
 
@@ -164,7 +173,14 @@ Default status reports should include only:
 - verification result
 - next recommended issue
 
-Sixx should use cached context whenever possible and avoid re-reading broad repo/doc context unless the current issue actually requires it.
+Token optimization rule:
+- Sixx must not rehydrate the entire repository or documentation set unless context is lost
+- use targeted reads only
+- read files directly related to the active issue
+- read `docs/task_queue.md` only for next-task decisions
+- read `docs/api_contracts.md` or `docs/database_schema.md` only when implementing endpoints or validating endpoint/schema behavior
+- never re-summarize unchanged documentation
+- prefer cached context over repeated repo scans
 
 ## 11. Orchestrator Enforcement
 

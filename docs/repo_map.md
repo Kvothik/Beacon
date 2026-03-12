@@ -46,6 +46,7 @@ docs/
   github_issue_board_plan.md
   orchestrator_context.md
   approval_gated_supervisor.md
+  execution_router.md
   qa_review_model.md
   sentinel_context.md
   tdcj_lookup_adapter.md

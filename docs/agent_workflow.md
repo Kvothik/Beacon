@@ -7,6 +7,13 @@ This document defines the required execution order for autonomous implementation
 
 ## 2. Global Working Rules
 
+Agent model assignments:
+- Sixx -> `gpt-5-mini`
+- Sentinel -> `gpt-5-mini`
+- Shepherd -> `gpt-5-mini` (inactive / standby)
+- Forge -> `gpt-5.4`
+- Atlas -> `gpt-5.4`
+
 - Canonical local repository path: `~/dev/beacon`.
 - Work on one task at a time.
 - Prefer P0 scope until the MVP is complete.
@@ -34,6 +41,7 @@ Complete and stabilize these docs before application code expands:
 - `error_policy.md`
 - `system_invariants.md`
 - `repo_map.md`
+- `execution_router.md`
 
 Exit criteria:
 - endpoint names are documented
@@ -186,6 +194,8 @@ Rules:
 - do not rehydrate the entire repo unless context is lost
 - do not re-scan docs on every task
 - prefer targeted file reads instead of directory scans
+- read `docs/task_queue.md` only for next-task decisions
+- read `docs/api_contracts.md` or `docs/database_schema.md` only when implementing endpoints or validating endpoint/schema behavior
 - do not summarize unchanged documentation repeatedly
 - do not produce long explanations when a short status is sufficient
 
@@ -264,13 +274,13 @@ Commit rules:
 - commit message format: `type: description (#issue)`
 
 Supervisor and QA behavior:
-- Shepherd is approval-gated and remains continuously ready to recommend the next valid step when work completes or the system becomes idle
-- Shepherd may draft commands and send recommendations to the user only through Sixx, but never executes work directly
-- Sentinel is approval-gated and reviews completed work for regressions, drift, missing verification, and acceptance-criteria compliance
+- Sixx performs next-step planning directly using `docs/execution_router.md`, GitHub issue state, and project board state
+- Shepherd is inactive / standby and is not used in the active execution loop unless explicitly re-enabled
+- Sentinel is approval-gated and reviews completed work for regressions, drift, missing verification, and acceptance-criteria compliance on high-risk issues
 - Sentinel may prepare future GitHub issues only after explicit approval and does not assign them itself
-- implementation completion flow is: implementation done -> Sixx verifies -> board/card to `DELIVERED` -> Sentinel review -> `ACCEPTED` or `IN PROGRESS`
+- implementation completion flow is: implementation done -> Sixx verifies -> board/card to `DELIVERED` -> Sentinel review when required -> `ACCEPTED` or `IN PROGRESS`
 - after any board move, Sixx must verify that the issue/card is actually present on the project board and in the expected status before reporting completion
-- if Sentinel accepts, Sixx must relay the Sentinel result to the user immediately and then forward minimal review data to Shepherd for the next recommendation
+- if Sentinel accepts, Sixx must relay the Sentinel result to the user immediately and then determine the next recommendation directly
 - if Sentinel rejects, Sixx must relay the Sentinel rejection to the user immediately; no other issue may begin until the rejection is addressed or the human explicitly reprioritizes
 - all agent-to-human messages and all human-to-agent execution instructions route through Sixx
 - Forge and Atlas do not message the user directly unless routed through Sixx
