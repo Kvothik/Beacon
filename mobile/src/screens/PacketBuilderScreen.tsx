@@ -4,10 +4,11 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import ProgressBanner from '../components/ProgressBanner';
 import SectionCard from '../components/SectionCard';
 import type { AppStackParamList } from '../navigation/AppNavigator';
-import { usePacketStore } from '../store/packetStore';
+import { getPacketCompletionSummary, usePacketStore } from '../store/packetStore';
 
 export default function PacketBuilderScreen({ navigation }: NativeStackScreenProps<AppStackParamList, 'PacketBuilder'>) {
   const { activePacket, sections } = usePacketStore();
+  const { completedCount, totalCount } = getPacketCompletionSummary(sections);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -27,6 +28,7 @@ export default function PacketBuilderScreen({ navigation }: NativeStackScreenPro
           <Text style={styles.metaText}>Offender: {activePacket.offender_name}</Text>
           <Text style={styles.metaText}>SID: {activePacket.offender_sid}</Text>
           <Text style={styles.metaText}>Parole Board Office: {activePacket.parole_board_office_code ?? 'Not available'}</Text>
+          <Text style={styles.progressText}>{completedCount} of {totalCount} sections complete</Text>
         </View>
       ) : null}
 
@@ -38,7 +40,7 @@ export default function PacketBuilderScreen({ navigation }: NativeStackScreenPro
             <SectionCard
               key={section.section_key}
               title={section.title}
-              description={section.is_populated ? 'Complete' : 'Not started'}
+              description={`Section ${section.sort_order} of ${totalCount} • ${section.is_populated ? 'Complete' : 'Not started'}`}
               onPress={activePacket ? () => navigation.navigate('SectionDetail') : undefined}
             />
           ))}
@@ -54,5 +56,6 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
   sectionDescription: { color: '#4b5563', lineHeight: 20 },
   metaText: { color: '#111827' },
+  progressText: { color: '#2563eb', fontWeight: '600' },
   list: { gap: 12 },
 });

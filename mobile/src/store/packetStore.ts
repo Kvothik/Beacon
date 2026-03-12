@@ -7,6 +7,14 @@ export type PacketStoreState = {
   sections: PacketSectionState[];
 };
 
+export function getPacketCompletionSummary(sections: PacketSectionState[]) {
+  const completedCount = sections.filter((section) => section.is_populated).length;
+  return {
+    completedCount,
+    totalCount: sections.length,
+  };
+}
+
 const DEFAULT_PACKET_SECTIONS: PacketSectionState[] = [
   { section_key: 'photos', title: 'Photos', is_populated: false, sort_order: 1 },
   { section_key: 'support_letters', title: 'Support Letters', is_populated: false, sort_order: 2 },
