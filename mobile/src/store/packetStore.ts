@@ -77,6 +77,17 @@ export const packetStore = {
     });
   },
 
+  updateActivePacket(patch: Partial<PacketSummary>) {
+    if (!state.activePacket) {
+      return;
+    }
+
+    setState({
+      ...state,
+      activePacket: { ...state.activePacket, ...patch },
+    });
+  },
+
   getSection(sectionKey: PacketSectionKey) {
     return state.sections.find((section) => section.section_key === sectionKey) ?? null;
   },

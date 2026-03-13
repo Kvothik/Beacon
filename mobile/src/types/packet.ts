@@ -69,3 +69,17 @@ export type PacketUploadCreateResponse = {
   storage_key: string;
   created_at: string;
 };
+
+export type PacketReadinessResponse = {
+  packet_id: string;
+  is_ready: boolean;
+  missing_items: string[];
+  updated_at: string;
+};
+
+export type PacketPdfGenerateResponse = {
+  packet_id: string;
+  status: 'draft' | 'generating' | 'generating_pdf' | 'ready';
+  pdf_url: string;
+  generated_at: string;
+};

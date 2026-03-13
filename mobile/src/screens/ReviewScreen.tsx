@@ -214,6 +214,13 @@ export default function ReviewScreen({ navigation }: NativeStackScreenProps<AppS
             </View>
           ))}
         </View>
+        <Pressable
+          style={[styles.primaryButton, !readiness?.is_ready && styles.primaryButtonDisabled]}
+          onPress={() => navigation.navigate('PdfPreview')}
+          disabled={!readiness?.is_ready}
+        >
+          <Text style={styles.primaryButtonText}>{readiness?.is_ready ? 'Continue to PDF Export' : 'Resolve blocking items first'}</Text>
+        </Pressable>
       </View>
 
       <View style={styles.panel}>
@@ -296,6 +303,9 @@ const styles = StyleSheet.create({
   summaryList: { gap: 4, marginTop: 4 },
   summaryText: { color: '#92400e', lineHeight: 20 },
   list: { gap: 12 },
+  primaryButton: { alignItems: 'center', paddingVertical: 14, borderRadius: 12, backgroundColor: '#111827' },
+  primaryButtonDisabled: { opacity: 0.6 },
+  primaryButtonText: { color: '#ffffff', fontWeight: '700' },
   secondaryButton: {
     alignSelf: 'flex-start',
     marginTop: 6,

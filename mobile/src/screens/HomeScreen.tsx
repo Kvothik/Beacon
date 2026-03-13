@@ -235,9 +235,9 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
 
       <View style={styles.list}>
         {activePacket ? <SectionCard title="Packet Builder" description="Open the active packet builder flow" onPress={() => navigation.navigate('PacketBuilder')} /> : null}
-        <SectionCard title="Scanner" description="Placeholder scanner shell" onPress={() => navigation.navigate('Scanner')} />
+        <SectionCard title="Scanner" description="Open scanner flow (defaults to Photos section when launched from Home)" onPress={() => navigation.navigate('Scanner', { sectionKey: 'photos' })} />
         <SectionCard title="Review" description="Placeholder review shell" onPress={() => navigation.navigate('Review')} />
-        <SectionCard title="PDF Preview" description="Placeholder PDF preview shell" onPress={() => navigation.navigate('PdfPreview')} />
+        <SectionCard title="PDF Export" description="Open the final packet PDF generation flow" onPress={() => navigation.navigate('PdfPreview')} />
       </View>
 
       <Pressable style={styles.signOutButton} onPress={handleSignOut} disabled={isSigningOut}>

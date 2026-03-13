@@ -21,7 +21,7 @@ export type AppStackParamList = {
   Home: undefined;
   PacketBuilder: undefined;
   SectionDetail: { sectionKey: PacketSectionKey };
-  Scanner: undefined;
+  Scanner: { sectionKey: PacketSectionKey };
   Review: undefined;
   PdfPreview: undefined;
 };
@@ -67,7 +67,7 @@ export default function AppNavigator() {
             <Stack.Screen name="SectionDetail" component={SectionDetailScreen} options={{ title: 'Section Detail' }} />
             <Stack.Screen name="Scanner" component={ScannerScreen} options={{ title: 'Scanner' }} />
             <Stack.Screen name="Review" component={ReviewScreen} options={{ title: 'Review' }} />
-            <Stack.Screen name="PdfPreview" component={PdfPreviewScreen} options={{ title: 'PDF Preview' }} />
+            <Stack.Screen name="PdfPreview" component={PdfPreviewScreen} options={{ title: 'PDF Export' }} />
           </>
         ) : (
           <>

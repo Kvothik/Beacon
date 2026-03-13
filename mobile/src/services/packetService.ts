@@ -1,6 +1,8 @@
 import { apiRequest } from './apiClient';
 import type {
   PacketCreateRequest,
+  PacketPdfGenerateResponse,
+  PacketReadinessResponse,
   PacketSectionKey,
   PacketSectionUpdateRequest,
   PacketSectionUpdateResponse,
@@ -28,6 +30,16 @@ export const packetService = {
     return apiRequest<PacketUploadCreateResponse>(`/packets/${encodeURIComponent(packetId)}/uploads`, {
       method: 'POST',
       body: JSON.stringify(payload),
+    });
+  },
+
+  async getReadiness(packetId: string) {
+    return apiRequest<PacketReadinessResponse>(`/packets/${encodeURIComponent(packetId)}/readiness`);
+  },
+
+  async generatePdf(packetId: string) {
+    return apiRequest<PacketPdfGenerateResponse>(`/packets/${encodeURIComponent(packetId)}/pdf`, {
+      method: 'POST',
     });
   },
 };
