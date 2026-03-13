@@ -19,6 +19,7 @@ from backend.app.core.db import create_session  # noqa: E402
 from backend.app.main import app  # noqa: E402
 from backend.app.models.document import Document  # noqa: E402
 from backend.app.models.packet import Packet, PacketSection  # noqa: E402
+from backend.app.models.parole_board import ParoleBoardOffice  # noqa: E402
 from backend.app.services.parole_board_service import seed_parole_board_reference_data  # noqa: E402
 
 
@@ -90,6 +91,30 @@ class PacketRouterTests(unittest.TestCase):
         self.assertEqual(body["parole_board_office_code"], "HUNTSVILLE")
         self.assertIn("created_at", body)
         self.assertIn("updated_at", body)
+
+    def test_create_packet_hydrates_seeded_office_when_reference_table_is_empty(self) -> None:
+        token = register_and_get_token(self.client, prefix="packetoffice")
+        with create_session() as session:
+            session.query(ParoleBoardOffice).delete()
+            session.commit()
+
+        response = self.client.post(
+            "/api/v1/packets",
+            json={
+                "offender_sid": "77777770",
+                "offender_name": "SMITH,J C",
+                "offender_tdcj_number": "02394240",
+                "current_facility": "COLE",
+                "parole_board_office_code": "AMARILLO",
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["parole_board_office_code"], "AMARILLO")
+
+        with create_session() as session:
+            office = session.scalar(select(ParoleBoardOffice).where(ParoleBoardOffice.office_code == "AMARILLO"))
+            self.assertIsNotNone(office)
 
     def test_create_packet_initializes_all_sections_in_pdf_order(self) -> None:
         token = register_and_get_token(self.client)
@@ -289,6 +314,24 @@ class PacketRouterTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["error"]["code"], "invalid_section_key")
 
+    def test_post_packet_upload_rejects_unsupported_content_type(self) -> None:
+        token = register_and_get_token(self.client)
+        body = create_packet(self.client, token, sid="77777778")
+
+        response = self.client.post(
+            f"/api/v1/packets/{body['id']}/uploads",
+            json={
+                "section_key": "photos",
+                "filename": "archive.zip",
+                "content_type": "application/zip",
+                "source": "upload",
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"]["code"], "validation_error")
+        self.assertIn("allowed_content_types", response.json()["error"]["details"])
+
     def test_post_packet_upload_enforces_ownership(self) -> None:
         owner_token = register_and_get_token(self.client, prefix="ownerupload")
         other_token = register_and_get_token(self.client, prefix="otherupload")
@@ -306,6 +349,66 @@ class PacketRouterTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["error"]["code"], "forbidden")
+
+    def test_post_packet_upload_complete_marks_document_uploaded(self) -> None:
+        token = register_and_get_token(self.client, prefix="uploadcomplete")
+        body = create_packet(self.client, token, sid="88888889")
+
+        create_response = self.client.post(
+            f"/api/v1/packets/{body['id']}/uploads",
+            json={
+                "section_key": "photos",
+                "filename": "image1.jpg",
+                "content_type": "image/jpeg",
+                "source": "upload",
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        upload = create_response.json()
+
+        complete_response = self.client.post(
+            f"/api/v1/packets/{body['id']}/uploads/{upload['document_id']}/complete",
+            json={
+                "storage_key": upload["storage_key"],
+                "file_size_bytes": 123456,
+                "page_count": 1,
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(complete_response.status_code, 200)
+        completed = complete_response.json()
+        self.assertEqual(completed["upload_status"], "uploaded")
+        self.assertEqual(completed["file_size_bytes"], 123456)
+        self.assertEqual(completed["page_count"], 1)
+
+    def test_post_packet_upload_complete_rejects_oversized_file(self) -> None:
+        token = register_and_get_token(self.client, prefix="uploadsize")
+        body = create_packet(self.client, token, sid="88888890")
+
+        create_response = self.client.post(
+            f"/api/v1/packets/{body['id']}/uploads",
+            json={
+                "section_key": "photos",
+                "filename": "image1.jpg",
+                "content_type": "image/jpeg",
+                "source": "upload",
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        upload = create_response.json()
+
+        complete_response = self.client.post(
+            f"/api/v1/packets/{body['id']}/uploads/{upload['document_id']}/complete",
+            json={
+                "storage_key": upload["storage_key"],
+                "file_size_bytes": 10 * 1024 * 1024 + 1,
+                "page_count": 1,
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(complete_response.status_code, 400)
+        self.assertEqual(complete_response.json()["error"]["code"], "validation_error")
+        self.assertEqual(complete_response.json()["error"]["details"]["max_file_size_bytes"], 10 * 1024 * 1024)
 
     def test_post_cover_letter_generates_respectful_template(self) -> None:
         token = register_and_get_token(self.client)

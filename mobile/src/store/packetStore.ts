@@ -1,10 +1,11 @@
 import { useSyncExternalStore } from 'react';
 
-import type { PacketSectionKey, PacketSectionState, PacketSummary } from '../types/packet';
+import type { PacketRecentDocument, PacketSectionKey, PacketSectionState, PacketSummary } from '../types/packet';
 
 export type PacketStoreState = {
   activePacket: PacketSummary | null;
   sections: PacketSectionState[];
+  recentDocuments: PacketRecentDocument[];
 };
 
 export function getPacketCompletionSummary(sections: PacketSectionState[]) {
@@ -29,6 +30,7 @@ const DEFAULT_PACKET_SECTIONS: PacketSectionState[] = [
 let state: PacketStoreState = {
   activePacket: null,
   sections: DEFAULT_PACKET_SECTIONS,
+  recentDocuments: [],
 };
 
 const listeners = new Set<() => void>();
@@ -56,6 +58,7 @@ export const packetStore = {
     setState({
       activePacket: packet,
       sections: DEFAULT_PACKET_SECTIONS.map((section) => ({ ...section })),
+      recentDocuments: [],
     });
   },
 
@@ -74,6 +77,13 @@ export const packetStore = {
       sections: state.sections.map((section) =>
         section.section_key === sectionKey ? { ...section, document_count: section.document_count + 1 } : section,
       ),
+    });
+  },
+
+  addRecentDocument(document: PacketRecentDocument) {
+    setState({
+      ...state,
+      recentDocuments: [document, ...state.recentDocuments.filter((item) => item.id !== document.id)].slice(0, 12),
     });
   },
 
@@ -96,6 +106,7 @@ export const packetStore = {
     setState({
       activePacket: null,
       sections: DEFAULT_PACKET_SECTIONS.map((section) => ({ ...section })),
+      recentDocuments: [],
     });
   },
 };

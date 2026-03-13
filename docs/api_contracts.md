@@ -322,6 +322,11 @@ Response `200`:
 
 Create a document record and return upload target metadata.
 
+Supported upload content types for MVP:
+- `application/pdf`
+- `image/jpeg`
+- `image/png`
+
 Request:
 ```json
 {
@@ -350,6 +355,8 @@ Response `201`:
 ### POST `/api/v1/packets/{packet_id}/uploads/{document_id}/complete`
 
 Mark upload complete after storage succeeds.
+
+TEMP_RULE for MVP issue #29: uploads larger than `10485760` bytes (10 MB) are rejected until the final product limit is specified.
 
 Request:
 ```json

@@ -37,6 +37,15 @@ export type PacketSectionState = {
   document_count: number;
 };
 
+export type PacketRecentDocument = {
+  id: string;
+  section_key: PacketSectionKey;
+  filename: string;
+  source: 'upload' | 'scanner';
+  status: 'queued';
+  created_at: string;
+};
+
 export type PacketSectionUpdateRequest = {
   notes_text?: string | null;
   is_populated: boolean;

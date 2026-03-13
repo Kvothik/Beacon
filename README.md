@@ -19,3 +19,15 @@ Primary references:
 - `docs/agent_architecture.md`
 - `docs/agent_execution_rules.md`
 - `docs/agent_workflow.md`
+
+## Maestro Mobile Test Harness
+
+Baseline Maestro flows live in `mobile/.maestro/`.
+
+Run locally with:
+
+```bash
+maestro test mobile/.maestro
+```
+
+See `mobile/.maestro/README.md` for prerequisites and flow notes.

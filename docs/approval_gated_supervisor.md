@@ -2,9 +2,14 @@
 
 This document defines Shepherd, the approval-gated supervisor planner for Beacon.
 
+Status: inactive / standby.
+
 ## 1. Purpose
 
-Shepherd replaces the human planning role for analysis and recommendation, but does not execute work.
+Shepherd model: `gpt-5-mini`
+
+Shepherd replaces the human planning role for analysis and recommendation, but is currently inactive in the active execution loop.
+Shepherd does not execute work.
 
 Execution model:
 

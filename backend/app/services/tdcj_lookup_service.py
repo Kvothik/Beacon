@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from time import sleep
 from typing import Any, Optional
-from urllib.parse import parse_qs, urljoin, urlparse
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse
+from urllib.request import Request as UrlRequest, urlopen
 
 import httpx
 from bs4 import BeautifulSoup
@@ -151,6 +152,23 @@ class TdcjLookupService:
                     response.raise_for_status()
                     self._throttle()
                     return response.text
+            except httpx.RemoteProtocolError as exc:
+                last_exception = exc
+                try:
+                    response_text = self._request_with_urllib(method, url, headers=headers, **kwargs)
+                    self._throttle()
+                    return response_text
+                except Exception as fallback_exc:
+                    last_exception = fallback_exc
+                    if attempt == 0:
+                        sleep(0.5)
+                        continue
+                    raise ApiError(
+                        502,
+                        "tdcj_network_error",
+                        "Offender lookup is temporarily unavailable.",
+                        retryable=True,
+                    ) from fallback_exc
             except httpx.HTTPStatusError as exc:
                 last_exception = exc
                 if exc.response.status_code == 404 and method == "GET":
@@ -174,6 +192,20 @@ class TdcjLookupService:
             retryable=True,
             details={"reason": type(last_exception).__name__ if last_exception else "unknown"},
         )
+
+    def _request_with_urllib(self, method: str, url: str, *, headers: dict[str, str], **kwargs: Any) -> str:
+        params = kwargs.get("params") or None
+        data = kwargs.get("data") or None
+        request_url = url
+        if params:
+            query = urlencode(params)
+            separator = "&" if "?" in request_url else "?"
+            request_url = f"{request_url}{separator}{query}"
+
+        encoded_data = urlencode(data).encode("utf-8") if data else None
+        request = UrlRequest(request_url, data=encoded_data, headers=headers, method=method.upper())
+        with urlopen(request, timeout=self._timeout_seconds) as response:
+            return response.read().decode("utf-8", errors="replace")
 
     def parse_search_results_page(self, html: str) -> dict[str, Any]:
         soup = BeautifulSoup(html, "html.parser")

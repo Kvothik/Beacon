@@ -4,8 +4,10 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 from uuid import uuid4
 
+import httpx
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
@@ -326,6 +328,18 @@ class TdcjLookupServiceParserTests(unittest.TestCase):
         with self.assertRaises(ApiError) as context:
             self.service.search_offenders(SearchRequest())
         self.assertEqual(context.exception.code, "invalid_search_request")
+
+    def test_request_with_retry_falls_back_to_urllib_on_remote_protocol_error(self) -> None:
+        with mock.patch("httpx.Client.request", side_effect=httpx.RemoteProtocolError("bad header")):
+            with mock.patch.object(self.service, "_request_with_urllib", return_value=SEARCH_RESULTS_HTML) as fallback:
+                response = self.service._request_with_retry(
+                    "POST",
+                    "https://inmate.tdcj.texas.gov/InmateSearch/search.action",
+                    data={"lastName": "Smith", "firstName": "J"},
+                )
+
+        self.assertIn("Search Result Listing", response)
+        fallback.assert_called_once()
 
 
 if __name__ == "__main__":

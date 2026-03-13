@@ -5,14 +5,14 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import ErrorState from '../components/ErrorState';
 import LoadingState from '../components/LoadingState';
 import ProgressBanner from '../components/ProgressBanner';
-import SectionCard from '../components/SectionCard';
 import type { AppStackParamList } from '../navigation/AppNavigator';
 import { packetService } from '../services/packetService';
 import { getPacketCompletionSummary, usePacketStore } from '../store/packetStore';
+import { logWorkflowEvent } from '../utils/eventLogger';
 import type { PacketReadinessResponse } from '../types/packet';
 
 export default function ReviewScreen({ navigation }: NativeStackScreenProps<AppStackParamList, 'Review'>) {
-  const { activePacket, sections } = usePacketStore();
+  const { activePacket, sections, recentDocuments } = usePacketStore();
   const { completedCount, totalCount } = getPacketCompletionSummary(sections);
   const totalDocuments = sections.reduce((count, section) => count + section.document_count, 0);
   const [readiness, setReadiness] = useState<PacketReadinessResponse | null>(null);
@@ -45,6 +45,17 @@ export default function ReviewScreen({ navigation }: NativeStackScreenProps<AppS
       // state is already handled inside loadReadiness
     });
   }, [loadReadiness]);
+
+  useEffect(() => {
+    if (!activePacket) {
+      return;
+    }
+    logWorkflowEvent({
+      type: 'packet_review_opened',
+      packetId: activePacket.id,
+      metadata: { offenderName: activePacket.offender_name },
+    });
+  }, [activePacket]);
 
   const blockingItems = useMemo(() => {
     if (!readiness) {
@@ -96,6 +107,36 @@ export default function ReviewScreen({ navigation }: NativeStackScreenProps<AppS
 
     return items;
   }, [completedCount, readiness, totalDocuments]);
+
+  const visibleDocuments = useMemo(() => recentDocuments.slice(0, 8), [recentDocuments]);
+
+  const readinessLabel = useMemo(() => {
+    if (readiness?.is_ready) {
+      return 'Ready to Export';
+    }
+    if (blockingItems.length > 0) {
+      return 'Missing Required Sections';
+    }
+    return 'Recommended Additions Available';
+  }, [blockingItems.length, readiness]);
+
+  const sectionChecklist = useMemo(
+    () =>
+      sections.map((section) => {
+        const missingNotes = readiness?.missing_items.includes(`section:${section.section_key}`) ?? false;
+        const missingDocument = readiness?.missing_items.includes(`documents:${section.section_key}`) ?? false;
+        const hasDocuments = section.document_count > 0;
+        const status = missingNotes || missingDocument ? 'Missing' : section.is_populated && hasDocuments ? 'Complete' : hasDocuments || section.is_populated ? 'Partially Complete' : 'Missing';
+        return {
+          sectionKey: section.section_key,
+          title: section.title,
+          documentCount: section.document_count,
+          status,
+          isRequiredMissing: missingNotes || missingDocument,
+        };
+      }),
+    [readiness, sections],
+  );
 
   const nextStepHints = useMemo(() => {
     if (!readiness) {
@@ -151,6 +192,7 @@ export default function ReviewScreen({ navigation }: NativeStackScreenProps<AppS
         <Text style={styles.metaText}>Sections complete: {completedCount} of {totalCount}</Text>
         <Text style={styles.metaText}>Queued documents: {totalDocuments}</Text>
         <Text style={styles.metaText}>Validation status: {readiness?.is_ready ? 'Ready for PDF' : 'Blocked for final PDF'}</Text>
+        <Text style={styles.readinessBadge}>{readinessLabel}</Text>
         {readiness && !readiness.is_ready ? (
           <View style={styles.summaryList}>
             {readinessCounts.missingCoverLetter ? <Text style={styles.summaryText}>• Cover letter still needs to be generated</Text> : null}
@@ -204,6 +246,20 @@ export default function ReviewScreen({ navigation }: NativeStackScreenProps<AppS
       </View>
 
       <View style={styles.panel}>
+        <Text style={styles.sectionTitle}>Visible Attachments</Text>
+        <Text style={styles.sectionDescription}>Recent scanned and uploaded documents appear here so you can verify what was attached most recently.</Text>
+        {visibleDocuments.length === 0 ? <Text style={styles.sectionDescription}>No visible document entries yet in this packet session.</Text> : null}
+        <View style={styles.messageList}>
+          {visibleDocuments.map((document) => (
+            <View key={document.id} style={styles.attachmentItem}>
+              <Text style={styles.attachmentTitle}>{document.filename}</Text>
+              <Text style={styles.attachmentMeta}>{formatSectionKey(document.section_key)} • {document.source === 'scanner' ? 'Scanned' : 'Uploaded'} • {document.status}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.panel}>
         <Text style={styles.sectionTitle}>Next Steps</Text>
         <Text style={styles.sectionDescription}>These reminders are guidance for finishing the packet; they do not replace the blocking checks above.</Text>
         <View style={styles.messageList}>
@@ -216,7 +272,17 @@ export default function ReviewScreen({ navigation }: NativeStackScreenProps<AppS
         </View>
         <Pressable
           style={[styles.primaryButton, !readiness?.is_ready && styles.primaryButtonDisabled]}
-          onPress={() => navigation.navigate('PdfPreview')}
+          onPress={() => {
+            if (!activePacket || !readiness?.is_ready) {
+              return;
+            }
+            logWorkflowEvent({
+              type: 'packet_export_started',
+              packetId: activePacket.id,
+              metadata: { source: 'review_screen' },
+            });
+            navigation.navigate('PdfPreview');
+          }}
           disabled={!readiness?.is_ready}
         >
           <Text style={styles.primaryButtonText}>{readiness?.is_ready ? 'Continue to PDF Export' : 'Resolve blocking items first'}</Text>
@@ -224,16 +290,24 @@ export default function ReviewScreen({ navigation }: NativeStackScreenProps<AppS
       </View>
 
       <View style={styles.panel}>
-        <Text style={styles.sectionTitle}>Section Review</Text>
-        <Text style={styles.sectionDescription}>Use this screen to scan the packet at a glance and jump back into any section that still needs work.</Text>
+        <Text style={styles.sectionTitle}>Packet Readiness Checklist</Text>
+        <Text style={styles.sectionDescription}>This checklist shows which sections are complete, partially complete, or still missing before submission.</Text>
         <View style={styles.list}>
-          {sections.map((section) => (
-            <SectionCard
-              key={section.section_key}
-              title={section.title}
-              description={formatSectionDescription(section, readiness?.missing_items ?? [])}
-              onPress={() => navigation.navigate('SectionDetail', { sectionKey: section.section_key })}
-            />
+          {sectionChecklist.map((section) => (
+            <Pressable
+              key={section.sectionKey}
+              style={[styles.checklistItem, section.isRequiredMissing && styles.checklistItemMissing]}
+              onPress={() => navigation.navigate('SectionDetail', { sectionKey: section.sectionKey })}
+            >
+              <View style={styles.checklistHeader}>
+                <Text style={styles.checklistTitle}>{section.title}</Text>
+                <Text style={[styles.checklistBadge, section.status === 'Complete' ? styles.checklistBadgeComplete : section.status === 'Partially Complete' ? styles.checklistBadgePartial : styles.checklistBadgeMissing]}>
+                  {section.status}
+                </Text>
+              </View>
+              <Text style={styles.checklistMeta}>Documents: {section.documentCount}</Text>
+              {section.isRequiredMissing ? <Text style={styles.checklistWarning}>Required content is still missing for this section.</Text> : null}
+            </Pressable>
           ))}
         </View>
       </View>
@@ -259,29 +333,6 @@ function formatMissingItem(item: string) {
   return item;
 }
 
-function formatSectionDescription(
-  section: { section_key: string; is_populated: boolean; document_count: number },
-  missingItems: string[],
-) {
-  const blockers: string[] = [];
-
-  if (missingItems.includes(`section:${section.section_key}`)) {
-    blockers.push('needs notes or completion');
-  }
-
-  if (missingItems.includes(`documents:${section.section_key}`)) {
-    blockers.push('needs document');
-  }
-
-  if (blockers.length > 0) {
-    return `Blocking: ${blockers.join(' • ')}`;
-  }
-
-  const statusText = section.is_populated ? 'Complete' : 'Incomplete';
-  const documentText = section.document_count === 1 ? '1 document' : `${section.document_count} documents`;
-  return `Status: ${statusText} • ${documentText}`;
-}
-
 function formatSectionKey(sectionKey: string) {
   return sectionKey
     .split('_')
@@ -302,6 +353,7 @@ const styles = StyleSheet.create({
   metaText: { color: '#111827' },
   summaryList: { gap: 4, marginTop: 4 },
   summaryText: { color: '#92400e', lineHeight: 20 },
+  readinessBadge: { alignSelf: 'flex-start', color: '#1d4ed8', backgroundColor: '#dbeafe', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, fontWeight: '700', fontSize: 12, overflow: 'hidden' },
   list: { gap: 12 },
   primaryButton: { alignItems: 'center', paddingVertical: 14, borderRadius: 12, backgroundColor: '#111827' },
   primaryButtonDisabled: { opacity: 0.6 },
@@ -327,6 +379,19 @@ const styles = StyleSheet.create({
   completedItem: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   completedBullet: { color: '#065f46', fontSize: 16, lineHeight: 20 },
   completedText: { color: '#065f46', flex: 1, lineHeight: 20 },
+  attachmentItem: { backgroundColor: '#f9fafb', borderColor: '#e5e7eb', borderWidth: 1, borderRadius: 12, padding: 12, gap: 4 },
+  attachmentTitle: { color: '#111827', fontWeight: '600' },
+  attachmentMeta: { color: '#4b5563', fontSize: 13 },
+  checklistItem: { backgroundColor: '#f9fafb', borderColor: '#e5e7eb', borderWidth: 1, borderRadius: 12, padding: 12, gap: 6 },
+  checklistItemMissing: { borderColor: '#f59e0b', backgroundColor: '#fffbeb' },
+  checklistHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 },
+  checklistTitle: { flex: 1, color: '#111827', fontWeight: '600' },
+  checklistBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, fontSize: 12, fontWeight: '700', overflow: 'hidden' },
+  checklistBadgeComplete: { color: '#065f46', backgroundColor: '#d1fae5' },
+  checklistBadgePartial: { color: '#92400e', backgroundColor: '#fef3c7' },
+  checklistBadgeMissing: { color: '#991b1b', backgroundColor: '#fee2e2' },
+  checklistMeta: { color: '#4b5563', fontSize: 13 },
+  checklistWarning: { color: '#92400e', fontSize: 13, fontWeight: '600' },
   hintItem: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   hintBullet: { color: '#1f2937', fontSize: 16, lineHeight: 20 },
   hintText: { color: '#111827', flex: 1, lineHeight: 20 },

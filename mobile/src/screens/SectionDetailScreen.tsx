@@ -9,9 +9,10 @@ import ProgressBanner from '../components/ProgressBanner';
 import type { AppStackParamList } from '../navigation/AppNavigator';
 import { packetService } from '../services/packetService';
 import { packetStore, usePacketStore } from '../store/packetStore';
+import { logWorkflowEvent } from '../utils/eventLogger';
 
-export default function SectionDetailScreen({ route }: NativeStackScreenProps<AppStackParamList, 'SectionDetail'>) {
-  const { activePacket, sections } = usePacketStore();
+export default function SectionDetailScreen({ route, navigation }: NativeStackScreenProps<AppStackParamList, 'SectionDetail'>) {
+  const { activePacket, sections, recentDocuments } = usePacketStore();
   const section = useMemo(
     () => sections.find((candidate) => candidate.section_key === route.params.sectionKey) ?? null,
     [route.params.sectionKey, sections],
@@ -24,6 +25,10 @@ export default function SectionDetailScreen({ route }: NativeStackScreenProps<Ap
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+  const visibleDocuments = useMemo(
+    () => recentDocuments.filter((document) => document.section_key === route.params.sectionKey),
+    [recentDocuments, route.params.sectionKey],
+  );
 
   async function handleSave() {
     if (!activePacket || !section) {
@@ -46,7 +51,14 @@ export default function SectionDetailScreen({ route }: NativeStackScreenProps<Ap
       });
       setSaveSuccess('Section saved.');
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Unable to save this section right now.');
+      const message = error instanceof Error ? error.message : 'Unable to save this section right now.';
+      logWorkflowEvent({
+        type: 'workflow_error',
+        packetId: activePacket.id,
+        sectionKey: section.section_key,
+        metadata: { source: 'section_save', message },
+      });
+      setSaveError(message);
     } finally {
       setIsSaving(false);
     }
@@ -69,16 +81,43 @@ export default function SectionDetailScreen({ route }: NativeStackScreenProps<Ap
       }
 
       const file = result.assets[0];
-      await packetService.createUpload(activePacket.id, {
+      const upload = await packetService.createUpload(activePacket.id, {
         section_key: section.section_key,
         filename: file.name,
         content_type: file.mimeType ?? 'application/octet-stream',
         source: 'upload',
       });
       packetStore.incrementSectionDocumentCount(section.section_key);
+      packetStore.addRecentDocument({
+        id: upload.document_id,
+        section_key: section.section_key,
+        filename: upload.filename,
+        source: 'upload',
+        status: 'queued',
+        created_at: upload.created_at,
+      });
+      logWorkflowEvent({
+        type: 'document_uploaded',
+        packetId: activePacket.id,
+        sectionKey: section.section_key,
+        metadata: { filename: upload.filename, documentId: upload.document_id, contentType: upload.content_type },
+      });
+      logWorkflowEvent({
+        type: 'document_attached_to_section',
+        packetId: activePacket.id,
+        sectionKey: section.section_key,
+        metadata: { filename: upload.filename, source: 'upload', documentId: upload.document_id },
+      });
       setUploadSuccess(`Upload queued for ${file.name}.`);
     } catch (error) {
-      setUploadError(error instanceof Error ? error.message : 'Unable to queue this upload right now.');
+      const message = error instanceof Error ? error.message : 'Unable to queue this upload right now.';
+      logWorkflowEvent({
+        type: 'workflow_error',
+        packetId: activePacket.id,
+        sectionKey: section.section_key,
+        metadata: { source: 'document_upload', message },
+      });
+      setUploadError(message);
     } finally {
       setIsUploading(false);
     }
@@ -129,10 +168,46 @@ export default function SectionDetailScreen({ route }: NativeStackScreenProps<Ap
         <Text style={styles.secondaryButtonText}>{isUploading ? 'Selecting…' : 'Select Document'}</Text>
       </Pressable>
 
+      <Pressable style={styles.secondaryButton} onPress={() => navigation.navigate('Scanner', { sectionKey: section.section_key })}>
+        <Text style={styles.secondaryButtonText}>Scan Document</Text>
+      </Pressable>
+
+      <View style={styles.panel}>
+        <Text style={styles.label}>Recent Attachments</Text>
+        <Text style={styles.metaText}>Use this list to verify which document was just attached to this section.</Text>
+        {visibleDocuments.length === 0 ? <Text style={styles.metaText}>No visible attachments yet for this section.</Text> : null}
+        {visibleDocuments.map((document) => (
+          <View key={document.id} style={styles.documentRow}>
+            <Text style={styles.documentTitle}>{document.filename}</Text>
+            <Text style={styles.documentMeta}>{document.source === 'scanner' ? 'Scanned document' : 'Uploaded document'} • {document.status}</Text>
+          </View>
+        ))}
+      </View>
+
       {isSaving ? <LoadingState label="Saving section to the backend…" /> : null}
       {isUploading ? <LoadingState label="Selecting document and creating upload…" /> : null}
       {saveError ? <ErrorState message={saveError} /> : null}
+      {saveError ? (
+        <View style={styles.errorActionRow}>
+          <Pressable style={styles.secondaryButton} onPress={() => handleSave().catch(() => {})}>
+            <Text style={styles.secondaryButtonText}>Retry Save</Text>
+          </Pressable>
+          <Pressable style={styles.secondaryButton} onPress={() => navigation.navigate('PacketBuilder')}>
+            <Text style={styles.secondaryButtonText}>Cancel and Return</Text>
+          </Pressable>
+        </View>
+      ) : null}
       {uploadError ? <ErrorState message={uploadError} /> : null}
+      {uploadError ? (
+        <View style={styles.errorActionRow}>
+          <Pressable style={styles.secondaryButton} onPress={() => handleSelectDocument().catch(() => {})}>
+            <Text style={styles.secondaryButtonText}>Retry Upload</Text>
+          </Pressable>
+          <Pressable style={styles.secondaryButton} onPress={() => navigation.navigate('PacketBuilder')}>
+            <Text style={styles.secondaryButtonText}>Cancel and Return</Text>
+          </Pressable>
+        </View>
+      ) : null}
       {saveSuccess ? <Text style={styles.successText}>{saveSuccess}</Text> : null}
       {uploadSuccess ? <Text style={styles.successText}>{uploadSuccess}</Text> : null}
     </ScrollView>
@@ -152,8 +227,12 @@ const styles = StyleSheet.create({
   notesInput: { minHeight: 180, borderWidth: 1, borderColor: '#d1d5db', borderRadius: 12, padding: 12, backgroundColor: '#ffffff', color: '#111827' },
   primaryButton: { alignItems: 'center', paddingVertical: 14, borderRadius: 12, backgroundColor: '#111827' },
   secondaryButton: { alignItems: 'center', paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: '#d1d5db', backgroundColor: '#ffffff' },
+  errorActionRow: { flexDirection: 'row', gap: 12 },
   primaryButtonDisabled: { opacity: 0.6 },
   primaryButtonText: { color: '#ffffff', fontWeight: '700' },
   secondaryButtonText: { color: '#111827', fontWeight: '700' },
+  documentRow: { backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, padding: 12, gap: 4 },
+  documentTitle: { color: '#111827', fontWeight: '600' },
+  documentMeta: { color: '#4b5563', fontSize: 13 },
   successText: { color: '#166534', fontWeight: '600' },
 });

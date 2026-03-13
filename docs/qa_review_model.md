@@ -30,6 +30,11 @@ Sentinel reviews completed work for:
 - parser assumption stability
 - upload/PDF/scanner behavior when those systems exist in the implemented scope
 
+Sentinel reviews must be evidence-based.
+Sentinel must not accept an issue without listing the checks performed.
+If no tests or runtime verification were performed, Sentinel must say so explicitly.
+If a review is docs-only, Sentinel must label it as a docs-level review, not full verification.
+
 ## 4. Review Outcomes
 
 Sentinel must classify each review as one of:
@@ -61,9 +66,7 @@ Sentinel must evaluate:
 If Sentinel ACCEPTS:
 - move issue/card to `ACCEPTED`
 - verify the card is actually visible on the project board in that status
-- comment on the GitHub issue with:
-  - `REVIEW RESULT: ACCEPT`
-  - concise verification summary
+- comment on the GitHub issue with evidence-based review content including the checks performed
 - send the review result to Sixx
 - Sixx must relay the Sentinel acceptance to the user immediately
 
@@ -87,7 +90,7 @@ Sentinel may recommend fixes, but any follow-up implementation requires explicit
 
 After explicit user approval, Sentinel may create the next GitHub issues from the approved roadmap or task queue for future assignment.
 
-Sentinel does not assign issues itself; issue orchestration remains with Sixx and Shepherd.
+Sentinel does not assign issues itself; issue orchestration remains with Sixx.
 
 Sentinel must not message the user directly.
 All findings and recommendations route through Sixx.

@@ -41,6 +41,7 @@ docs/
   pdf_spec.md
   scanner_implementation.md
   error_policy.md
+  remote_operating_model.md
   system_invariants.md
   task_queue.md
   github_issue_board_plan.md

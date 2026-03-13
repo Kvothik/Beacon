@@ -37,6 +37,11 @@ class ParoleBoardServiceTests(unittest.TestCase):
         self.assertEqual(office["office_code"], "HUNTSVILLE")
         self.assertEqual(office["office_name"], "Huntsville Board Office")
 
+    def test_lookup_parole_board_office_resolves_short_aliases_seen_in_live_tdcj_results(self) -> None:
+        self.assertEqual(lookup_parole_board_office("COLE")["office_code"], "GATESVILLE")
+        self.assertEqual(lookup_parole_board_office("LINDSEY SJ")["office_code"], "GATESVILLE")
+        self.assertEqual(lookup_parole_board_office("BILL CLEMENTS")["office_code"], "AMARILLO")
+
     def test_lookup_parole_board_office_raises_for_unknown_unit(self) -> None:
         with self.assertRaises(ApiError) as context:
             lookup_parole_board_office("UNKNOWN UNIT")

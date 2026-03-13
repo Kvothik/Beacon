@@ -80,6 +80,7 @@ Complete repository tree (excluding `.git/`):
 │   ├── pdf_spec.md
 │   ├── qa_review_model.md
 │   ├── execution_router.md
+│   ├── remote_operating_model.md
 │   ├── repo_map.md
 │   ├── scanner_implementation.md
 │   ├── sentinel_context.md

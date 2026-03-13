@@ -16,6 +16,13 @@ DATASETS_DIR = Path(__file__).resolve().parents[3] / "datasets"
 OFFICES_DATASET_PATH = DATASETS_DIR / "parole_board_offices.json"
 UNIT_MAPPINGS_DATASET_PATH = DATASETS_DIR / "parole_board_unit_mappings.json"
 
+UNIT_NAME_ALIASES = {
+    "COLE": "COLE STATE JAIL",
+    "BILL CLEMENTS": "CLEMENTS UNIT",
+    "BILL CLEMENTS UNIT": "CLEMENTS UNIT",
+    "LINDSEY SJ": "LINDSEY STATE JAIL",
+}
+
 
 def normalize_unit_name(unit_name: str) -> str:
     return re.sub(r"\s+", " ", unit_name.replace("*", " ")).strip().upper()
@@ -80,11 +87,18 @@ def resolve_seeded_office_for_unit(unit_name: str) -> Optional[dict[str, Any]]:
 
 def candidate_unit_lookup_keys(unit_name: str) -> list[str]:
     normalized = normalize_unit_name(unit_name)
+    alias = UNIT_NAME_ALIASES.get(normalized)
     candidates = [normalized]
+    if alias:
+        candidates.append(alias)
     if normalized.endswith(" UNIT"):
         candidates.append(normalized[: -len(" UNIT")].strip())
     else:
         candidates.append(f"{normalized} UNIT")
+    if normalized.endswith(" SJ"):
+        candidates.append(f"{normalized[: -len(' SJ')].strip()} STATE JAIL")
+    else:
+        candidates.append(f"{normalized} STATE JAIL")
     return list(dict.fromkeys(candidate for candidate in candidates if candidate))
 
 

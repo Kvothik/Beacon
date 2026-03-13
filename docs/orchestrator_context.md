@@ -72,13 +72,14 @@ Issue lifecycle:
 5. Sixx moves the issue/card to `DELIVERED`
 6. Sentinel reviews and either ACCEPTS or REJECTS
 7. Sixx determines the next recommended issue directly using `docs/execution_router.md`, GitHub issue state, and project board state
-8. Sixx relays the result to the user and waits for approval before the next implementation begins
+8. If the next routed issue is already approved or otherwise safe to proceed, Sixx starts it immediately; otherwise Sixx relays the result and waits for approval before the next implementation begins
 9. Final commits to `main` are controlled by Sixx and must reference the issue number
 10. Sixx must push the relevant commits to the GitHub repository before reporting an issue as fully completed
 
 Rules:
 - one agent per issue
 - issue closes only after Sentinel ACCEPTS
+- `docs/task_queue.md` must be updated on every completed story so issue status and current execution state remain accurate
 - no issue should be implemented outside documented dependencies unless Sixx explicitly reprioritizes
 - if an issue does not exist yet, Sixx may create it to preserve the workflow
 

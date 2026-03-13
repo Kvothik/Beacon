@@ -84,6 +84,20 @@ class PacketUploadCreateResponse(BaseModel):
     created_at: datetime
 
 
+class PacketUploadCompleteRequest(BaseModel):
+    storage_key: str
+    file_size_bytes: int
+    page_count: int
+
+
+class PacketUploadCompleteResponse(BaseModel):
+    document_id: str
+    upload_status: str
+    file_size_bytes: int
+    page_count: int
+    updated_at: datetime
+
+
 class PacketCoverLetterRequest(BaseModel):
     sender_name: str
     sender_phone: str

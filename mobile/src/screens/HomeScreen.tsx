@@ -33,11 +33,36 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
   const [paroleBoardError, setParoleBoardError] = useState<string | null>(null);
   const [packetError, setPacketError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [resultsFilter, setResultsFilter] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(true);
 
   const selectedSummary = useMemo(
     () => results.find((result) => result.sid === selectedOffenderSid) ?? null,
     [results, selectedOffenderSid],
   );
+
+  const visibleResults = useMemo(() => {
+    const needle = resultsFilter.trim().toUpperCase();
+    const filteredResults = !needle
+      ? results
+      : results.filter((result) => {
+          const haystack = [result.name, result.sid, result.tdcj_number, result.unit, result.projected_release_date]
+            .filter(Boolean)
+            .join(' ')
+            .toUpperCase();
+          return haystack.includes(needle);
+        });
+
+    return [...filteredResults].sort((left, right) => {
+      if (left.sid === selectedOffenderSid) {
+        return -1;
+      }
+      if (right.sid === selectedOffenderSid) {
+        return 1;
+      }
+      return 0;
+    });
+  }, [results, resultsFilter, selectedOffenderSid]);
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -67,6 +92,8 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
         page: 1,
       });
       offenderStore.setSearchResults(response.results, response.pagination);
+      setResultsFilter('');
+      setShowSearchResults(true);
       packetStore.reset();
     } catch (error) {
       offenderStore.reset();
@@ -85,6 +112,7 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
     setPacketError(null);
     offenderStore.setSelectedOffenderSid(offender.sid);
     offenderStore.setSelectedParoleBoardOffice(null);
+    setShowSearchResults(false);
     packetStore.reset();
 
     try {
@@ -171,20 +199,67 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<AppSta
 
       {results.length > 0 ? (
         <View style={styles.panel}>
-          <Text style={styles.sectionTitle}>Search Results</Text>
-          <Text style={styles.sectionDescription}>
-            {pagination ? `Page ${pagination.current_page} of ${pagination.total_pages}` : 'Results'}
-          </Text>
-          <View style={styles.list}>
-            {results.map((result) => (
-              <SectionCard
-                key={result.sid}
-                title={`${result.name} (${result.sid})`}
-                description={formatResultDescription(result)}
-                onPress={() => handleSelectOffender(result)}
-              />
-            ))}
+          <View style={styles.resultsHeader}>
+            <View style={styles.resultsHeaderCopy}>
+              <Text style={styles.sectionTitle}>Search Results</Text>
+              <Text style={styles.sectionDescription}>
+                {pagination ? `Page ${pagination.current_page} of ${pagination.total_pages}` : 'Results'}
+              </Text>
+            </View>
+            {selectedSummary ? (
+              <Pressable style={styles.secondaryButton} onPress={() => setShowSearchResults((current) => !current)}>
+                <Text style={styles.secondaryButtonText}>{showSearchResults ? 'Hide Results' : 'Choose Different Offender'}</Text>
+              </Pressable>
+            ) : null}
           </View>
+          {results.length > 1 ? (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Filter current results by SID, TDCJ, unit, or name"
+                value={resultsFilter}
+                onChangeText={setResultsFilter}
+                autoCapitalize="characters"
+              />
+              <Text style={styles.helperText}>Use SID, TDCJ number, unit, or any part of the name to narrow large result sets quickly.</Text>
+            </>
+          ) : null}
+          {showSearchResults ? (
+            visibleResults.length > 0 ? (
+              <View style={styles.list}>
+                {visibleResults.map((result) => {
+                  const isSelected = result.sid === selectedOffenderSid;
+                  return (
+                    <Pressable
+                      key={result.sid}
+                      style={[styles.resultCard, isSelected && styles.resultCardSelected]}
+                      onPress={() => handleSelectOffender(result)}
+                    >
+                      <View style={styles.resultCardHeader}>
+                        <View style={styles.resultCardTitleRow}>
+                          {isSelected ? <Text style={styles.selectedCheckmark}>✓</Text> : null}
+                          <Text style={styles.resultCardTitle}>{result.name} ({result.sid})</Text>
+                        </View>
+                        {isSelected ? <Text style={styles.selectedBadge}>Selected</Text> : null}
+                      </View>
+                      <Text style={styles.resultCardDescription}>{formatResultDescription(result)}</Text>
+                      {isSelected ? <Text style={styles.selectedHelper}>This is the currently selected offender for the packet flow.</Text> : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyTitle}>No filtered results match</Text>
+                <Text style={styles.emptyMessage}>Clear or change the filter to see more offenders from this search.</Text>
+              </View>
+            )
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>Results collapsed</Text>
+              <Text style={styles.emptyMessage}>The selected offender is shown below. Use “Choose Different Offender” if you need to switch.</Text>
+            </View>
+          )}
         </View>
       ) : null}
 
@@ -288,7 +363,40 @@ const styles = StyleSheet.create({
   emptyState: { backgroundColor: '#f9fafb', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#e5e7eb', gap: 6 },
   emptyTitle: { fontSize: 16, fontWeight: '600', color: '#111827' },
   emptyMessage: { color: '#4b5563' },
+  helperText: { color: '#6b7280', fontSize: 13, lineHeight: 18 },
   list: { gap: 12 },
+  resultsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  resultsHeaderCopy: { flex: 1, gap: 4 },
+  secondaryButton: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: '#d1d5db', backgroundColor: '#ffffff' },
+  secondaryButtonText: { color: '#111827', fontWeight: '600', fontSize: 13 },
+  resultCard: { backgroundColor: '#ffffff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#e5e7eb', gap: 8 },
+  resultCardSelected: {
+    borderColor: '#2563eb',
+    borderWidth: 2,
+    backgroundColor: '#eff6ff',
+    shadowColor: '#2563eb',
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  resultCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 },
+  resultCardTitleRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  selectedCheckmark: { color: '#1d4ed8', fontWeight: '800', fontSize: 18, lineHeight: 20 },
+  resultCardTitle: { flex: 1, fontSize: 16, fontWeight: '600', color: '#111827' },
+  resultCardDescription: { fontSize: 14, color: '#4b5563', lineHeight: 20 },
+  selectedBadge: {
+    color: '#1d4ed8',
+    fontWeight: '700',
+    fontSize: 12,
+    textTransform: 'uppercase',
+    backgroundColor: '#dbeafe',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  selectedHelper: { color: '#1d4ed8', fontSize: 13, fontWeight: '600' },
   detailCard: { backgroundColor: '#f9fafb', borderRadius: 12, borderWidth: 1, borderColor: '#e5e7eb', padding: 16, gap: 10 },
   detailTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
   detailRow: { gap: 4 },

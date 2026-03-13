@@ -18,10 +18,13 @@ from backend.app.schemas.packet import (
     PacketReadinessResponse,
     PacketSectionUpdateRequest,
     PacketSectionUpdateResponse,
+    PacketUploadCompleteRequest,
+    PacketUploadCompleteResponse,
     PacketUploadCreateRequest,
     PacketUploadCreateResponse,
 )
 from backend.app.services.packet_service import (
+    complete_packet_upload,
     create_packet,
     create_packet_upload,
     generate_cover_letter,
@@ -98,6 +101,26 @@ def create_packet_upload_record(
         source=payload.source,
     )
     return PacketUploadCreateResponse(**document)
+
+
+@router.post("/{packet_id}/uploads/{document_id}/complete", response_model=PacketUploadCompleteResponse)
+def complete_packet_upload_record(
+    packet_id: UUID,
+    document_id: UUID,
+    payload: PacketUploadCompleteRequest,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_authenticated_user),
+) -> PacketUploadCompleteResponse:
+    document = complete_packet_upload(
+        session,
+        current_user=current_user,
+        packet_id=packet_id,
+        document_id=document_id,
+        storage_key=payload.storage_key,
+        file_size_bytes=payload.file_size_bytes,
+        page_count=payload.page_count,
+    )
+    return PacketUploadCompleteResponse(**document)
 
 
 @router.post("/{packet_id}/cover-letter", response_model=PacketCoverLetterResponse)

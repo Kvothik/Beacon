@@ -1,0 +1,15 @@
+appId: host.exp.Exponent
+---
+- launchApp
+- assertVisible: "Beacon"
+- tapOn: "SID"
+- inputText: "50759686"
+- tapOn: "Search Offenders"
+- assertVisible: "Search Results"
+- tapOn: "SMITH,J M (50759686)"
+- assertVisible: "Selected Offender"
+- tapOn: "Create Packet"
+- assertVisible: "Packet Builder"
+- assertVisible: "Packet Summary"
+- tapOn: "Open Packet Review"
+- assertVisible: "Packet Review"
