@@ -21,8 +21,8 @@ It is ordered for MVP-first delivery, keeps P0 separate from later work, and is 
 
 ### Execution State
 
-- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`, `P0-06`, `P0-07`, `P0-08`, `P0-09`, `P0-10`, `P0-11`, `P0-12`, `P0-13`, `P0-14`, `P0-15`, `P0-16`, `P0-17`, `P0-18`, `P0-19`, `P0-20`, `P0-22`, `P0-23`, `P0-24`, `P0-25`, `P0-26`, `P0-27`
-- current: `P0-28`
+- completed: `P0-01`, `P0-02`, `P0-03`, `P0-04`, `P0-05`, `P0-06`, `P0-07`, `P0-08`, `P0-09`, `P0-10`, `P0-11`, `P0-12`, `P0-13`, `P0-14`, `P0-15`, `P0-16`, `P0-17`, `P0-18`, `P0-19`, `P0-20`, `P0-22`, `P0-23`, `P0-24`, `P0-25`, `P0-26`, `P0-27`, `P0-28`
+- current: `P0-29`
 
 ### P0-01. Lock documentation baseline and cross-document consistency
 
@@ -620,6 +620,9 @@ Issue shape:
 - pdf
 
 ### P0-28. Implement backend error handling hardening
+
+Status:
+- completed
 
 Scope:
 - tighten structured error handling across MVP packet, upload, validation, and PDF flows

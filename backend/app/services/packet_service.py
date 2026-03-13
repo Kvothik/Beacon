@@ -29,6 +29,17 @@ UPLOAD_URL_PLACEHOLDER = "https://object-storage.example/upload"
 PDF_URL_PREFIX = "https://object-storage.example/packets"
 
 
+def _raise_structured_internal_error(
+    session: Session,
+    *,
+    code: str = "internal_error",
+    message: str = "An internal error occurred.",
+    retryable: bool = False,
+) -> None:
+    session.rollback()
+    raise ApiError(500, code, message, retryable=retryable)
+
+
 def create_packet(
     session: Session,
     *,
@@ -63,38 +74,43 @@ def create_packet(
                 details={"parole_board_office_code": normalized_office_code},
             )
 
-    offender = Offender(
-        sid=normalized_sid,
-        name=normalized_name,
-        tdcj_number=offender_tdcj_number.strip() if offender_tdcj_number else None,
-        current_facility=current_facility.strip() if current_facility else None,
-        retrieved_at=datetime.now(timezone.utc),
-    )
-    session.add(offender)
-    session.flush()
-
-    packet = Packet(
-        user_id=current_user.id,
-        offender_id=offender.id,
-        parole_board_office_id=parole_board_office.id if parole_board_office else None,
-        status="draft",
-    )
-    session.add(packet)
-    session.flush()
-
-    for section_definition in PACKET_SECTION_DEFINITIONS:
-        session.add(
-            PacketSection(
-                packet_id=packet.id,
-                section_key=section_definition["section_key"],
-                title=section_definition["title"],
-                sort_order=section_definition["sort_order"],
-                is_populated=False,
-            )
+    try:
+        offender = Offender(
+            sid=normalized_sid,
+            name=normalized_name,
+            tdcj_number=offender_tdcj_number.strip() if offender_tdcj_number else None,
+            current_facility=current_facility.strip() if current_facility else None,
+            retrieved_at=datetime.now(timezone.utc),
         )
+        session.add(offender)
+        session.flush()
 
-    session.commit()
-    session.refresh(packet)
+        packet = Packet(
+            user_id=current_user.id,
+            offender_id=offender.id,
+            parole_board_office_id=parole_board_office.id if parole_board_office else None,
+            status="draft",
+        )
+        session.add(packet)
+        session.flush()
+
+        for section_definition in PACKET_SECTION_DEFINITIONS:
+            session.add(
+                PacketSection(
+                    packet_id=packet.id,
+                    section_key=section_definition["section_key"],
+                    title=section_definition["title"],
+                    sort_order=section_definition["sort_order"],
+                    is_populated=False,
+                )
+            )
+
+        session.commit()
+        session.refresh(packet)
+    except ApiError:
+        raise
+    except Exception as exc:
+        _raise_structured_internal_error(session, message="Unable to create packet right now.")
     return {
         "id": str(packet.id),
         "status": packet.status,
@@ -166,7 +182,7 @@ def update_packet_section(
     if section_key not in SECTION_KEY_VALUES:
         raise ApiError(
             400,
-            "validation_error",
+            "invalid_section_key",
             "Request validation failed.",
             details={"fields": ["section_key"]},
         )
@@ -183,10 +199,15 @@ def update_packet_section(
     if section is None:
         raise ApiError(404, "not_found", "No packet section was found for that key.")
 
-    section.notes_text = notes_text.strip() if notes_text is not None else None
-    section.is_populated = is_populated
-    session.commit()
-    session.refresh(section)
+    try:
+        section.notes_text = notes_text.strip() if notes_text is not None else None
+        section.is_populated = is_populated
+        session.commit()
+        session.refresh(section)
+    except ApiError:
+        raise
+    except Exception:
+        _raise_structured_internal_error(session, message="Unable to update packet section right now.")
 
     document_counts = _document_counts_by_section(session, packet.id)
     return {
@@ -215,7 +236,7 @@ def create_packet_upload(
     if packet.user_id != current_user.id:
         raise ApiError(403, "forbidden", "You do not have access to that packet.")
     if section_key not in SECTION_KEY_VALUES:
-        raise ApiError(400, "validation_error", "Request validation failed.", details={"fields": ["section_key"]})
+        raise ApiError(400, "invalid_section_key", "Request validation failed.", details={"fields": ["section_key"]})
     if source not in DOCUMENT_SOURCE_VALUES:
         raise ApiError(400, "validation_error", "Request validation failed.", details={"fields": ["source"]})
 
@@ -234,21 +255,30 @@ def create_packet_upload(
             details={"fields": [field for field, value in (("filename", cleaned_filename), ("content_type", content_type.strip())) if not value]},
         )
 
-    document = Document(
-        packet_id=packet.id,
-        packet_section_id=section.id,
-        filename=cleaned_filename,
-        content_type=content_type.strip(),
-        source=source,
-        upload_status="pending",
-    )
-    session.add(document)
-    session.flush()
+    try:
+        document = Document(
+            packet_id=packet.id,
+            packet_section_id=section.id,
+            filename=cleaned_filename,
+            content_type=content_type.strip(),
+            source=source,
+            upload_status="pending",
+        )
+        session.add(document)
+        session.flush()
 
-    storage_key = f"packets/{packet.id}/documents/{document.id}-{cleaned_filename}"
-    document.storage_key = storage_key
-    session.commit()
-    session.refresh(document)
+        storage_key = f"packets/{packet.id}/documents/{document.id}-{cleaned_filename}"
+        document.storage_key = storage_key
+        session.commit()
+        session.refresh(document)
+    except ApiError:
+        raise
+    except Exception:
+        _raise_structured_internal_error(
+            session,
+            code="upload_failed",
+            message="Unable to create the upload record right now.",
+        )
 
     return {
         "document_id": str(document.id),
@@ -299,13 +329,18 @@ def generate_cover_letter(
     if missing_fields:
         raise ApiError(400, 'validation_error', 'Request validation failed.', details={'fields': missing_fields})
 
-    packet.sender_name = payload['sender_name']
-    packet.sender_phone = payload['sender_phone']
-    packet.sender_email = payload['sender_email']
-    packet.sender_relationship = payload['sender_relationship']
-    packet.cover_letter_text = _render_cover_letter(packet, offender, office)
-    session.commit()
-    session.refresh(packet)
+    try:
+        packet.sender_name = payload['sender_name']
+        packet.sender_phone = payload['sender_phone']
+        packet.sender_email = payload['sender_email']
+        packet.sender_relationship = payload['sender_relationship']
+        packet.cover_letter_text = _render_cover_letter(packet, offender, office)
+        session.commit()
+        session.refresh(packet)
+    except ApiError:
+        raise
+    except Exception:
+        _raise_structured_internal_error(session, message="Unable to generate the cover letter right now.")
 
     return {
         'packet_id': str(packet.id),
@@ -320,11 +355,20 @@ def generate_packet_pdf(session: Session, *, current_user: User, packet_id: UUID
         raise ApiError(400, 'validation_error', 'Packet PDF generation requires a ready packet.', details={'missing_items': readiness['missing_items']})
 
     packet = session.get(Packet, packet_id)
-    packet.status = 'ready'
-    packet.generated_pdf_key = f"packets/{packet.id}/final-packet.pdf"
-    packet.pdf_generated_at = datetime.now(timezone.utc)
-    session.commit()
-    session.refresh(packet)
+    try:
+        packet.status = 'ready'
+        packet.generated_pdf_key = f"packets/{packet.id}/final-packet.pdf"
+        packet.pdf_generated_at = datetime.now(timezone.utc)
+        session.commit()
+        session.refresh(packet)
+    except ApiError:
+        raise
+    except Exception:
+        _raise_structured_internal_error(
+            session,
+            code='pdf_generation_failed',
+            message='Unable to generate the packet PDF right now.',
+        )
 
     return {
         'packet_id': str(packet.id),

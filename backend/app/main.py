@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -15,6 +17,8 @@ from backend.app.routers.packet_router import router as packet_router
 from backend.app.routers.parole_board_router import router as parole_board_router
 from backend.app.routers.pdf_router import router as pdf_router
 from backend.app.routers.upload_router import router as upload_router
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -58,6 +62,22 @@ async def handle_validation_error(_request: Request, exc: RequestValidationError
                 "code": "validation_error",
                 "message": "Request validation failed.",
                 "details": {"fields": fields},
+                "retryable": False,
+            }
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def handle_unexpected_error(_request: Request, exc: Exception) -> JSONResponse:
+    logger.exception("Unhandled backend exception", exc_info=exc)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": {
+                "code": "internal_error",
+                "message": "An internal error occurred.",
+                "details": None,
                 "retryable": False,
             }
         },

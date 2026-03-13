@@ -4,6 +4,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 from uuid import UUID, uuid4
 
 from alembic import command
@@ -234,7 +235,7 @@ class PacketRouterTests(unittest.TestCase):
             headers={"Authorization": f"Bearer {token}"},
         )
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()["error"]["code"], "validation_error")
+        self.assertEqual(response.json()["error"]["code"], "invalid_section_key")
 
     def test_patch_packet_section_enforces_ownership(self) -> None:
         owner_token = register_and_get_token(self.client, prefix="ownerpatch")
@@ -286,7 +287,7 @@ class PacketRouterTests(unittest.TestCase):
             headers={"Authorization": f"Bearer {token}"},
         )
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()["error"]["code"], "validation_error")
+        self.assertEqual(response.json()["error"]["code"], "invalid_section_key")
 
     def test_post_packet_upload_enforces_ownership(self) -> None:
         owner_token = register_and_get_token(self.client, prefix="ownerupload")
@@ -362,6 +363,26 @@ class PacketRouterTests(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["error"]["code"], "forbidden")
 
+    def test_post_cover_letter_returns_structured_internal_error_on_render_failure(self) -> None:
+        token = register_and_get_token(self.client, prefix="coverfail")
+        body = create_packet(self.client, token, sid="99999966")
+
+        with mock.patch("backend.app.services.packet_service._render_cover_letter", side_effect=RuntimeError("boom")):
+            response = self.client.post(
+                f"/api/v1/packets/{body['id']}/cover-letter",
+                json={
+                    "sender_name": "Jane Doe",
+                    "sender_phone": "512-555-0100",
+                    "sender_email": "jane@example.com",
+                    "sender_relationship": "sister",
+                },
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.json()["error"]["code"], "internal_error")
+        self.assertFalse(response.json()["error"]["retryable"])
+
     def test_get_readiness_reports_missing_items_before_packet_is_ready(self) -> None:
         token = register_and_get_token(self.client)
         body = create_packet(self.client, token, sid="99999996")
@@ -434,6 +455,47 @@ class PacketRouterTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["error"]["code"], "validation_error")
         self.assertIn("missing_items", response.json()["error"]["details"])
+
+    def test_post_pdf_returns_structured_pdf_generation_failed_on_commit_failure(self) -> None:
+        token = register_and_get_token(self.client, prefix="pdffail")
+        body = create_packet(self.client, token, sid="99999965")
+        create_cover_letter(self.client, token, body["id"])
+
+        for section_key in (
+            "photos",
+            "support_letters",
+            "reflection_letter",
+            "certificates_and_education",
+            "future_employment",
+            "parole_plan",
+            "court_and_case_documents",
+            "other_miscellaneous",
+        ):
+            self.client.patch(
+                f"/api/v1/packets/{body['id']}/sections/{section_key}",
+                json={"notes_text": f"{section_key} complete", "is_populated": True},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            self.client.post(
+                f"/api/v1/packets/{body['id']}/uploads",
+                json={
+                    "section_key": section_key,
+                    "filename": f"{section_key}.jpg",
+                    "content_type": "image/jpeg",
+                    "source": "upload",
+                },
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+        with mock.patch("sqlalchemy.orm.session.Session.commit", side_effect=RuntimeError("boom")):
+            response = self.client.post(
+                f"/api/v1/packets/{body['id']}/pdf",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.json()["error"]["code"], "pdf_generation_failed")
+        self.assertFalse(response.json()["error"]["retryable"])
 
     def test_get_readiness_enforces_ownership(self) -> None:
         owner_token = register_and_get_token(self.client, prefix="ownerready")
