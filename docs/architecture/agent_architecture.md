@@ -8,53 +8,64 @@ This architecture separates planning, implementation, verification, and workflow
 
 ## 2. Agent Roles
 
-### Overseer Agent
+### Sixx (orchestrator)
 
 Responsibilities:
-- read GitHub issues
-- maintain the execution queue
-- assign work to other agents
-- stop execution if ambiguity or rule violations occur
-- enforce sequential issue execution
-- ensure completed work is committed, pushed, and reflected in GitHub + repo docs
+- manage queue
+- assign tasks
+- spawn workers
+- update GitHub board
+- send Telegram updates
+- enforce worker lifecycle
 
-### Planner Agent
+### Aegis (strategist / proposal engine)
 
 Responsibilities:
-- read issue requirements
-- break work into implementation steps
-- identify schema, dependency, or documentation changes
-- produce an execution plan before implementation starts
+- analyze repository structure
+- detect architectural drift
+- detect technical debt
+- propose improvements
+- create GitHub issues in Sandbox column
+- send proposal to Telegram
+- wait for approval before moving issue to backlog
+ Rules:
+- may not execute code
+- may only create proposals
 
-### Builder Agent
+### Forge (backend implementation)
 
 Responsibilities:
 - write code
 - update schema
-- implement APIs and services
+- implement backend services
 - create migrations
-- follow planner instructions only
+- follow strategy from Aegis
 
-Constraints:
-- cannot invent schema or business logic
-- cannot skip verification
-- cannot redefine issue scope without escalation
-
-### Verifier Agent
+### Atlas (frontend/mobile implementation)
 
 Responsibilities:
+- write code for user interface
+- implement frontend and mobile features
+- collaborate with Forge for API integration
+
+### Sentinel (QA / verification)
+
+Responsibilities:
+- run builds
+- run lint and typechecks
 - run tests
-- check for lint or static analysis issues when configured
-- validate migrations
-- confirm issue requirements were satisfied
-- reject incomplete implementations
+- verify acceptance criteria
+- PASS → move issue to Accepted
+- FAIL → move issue to In Progress
 
-### Documentation Agent (optional)
+### Pulse (runtime monitor)
 
 Responsibilities:
-- update docs
-- maintain architecture and schema references
-- keep repo maps and workflow docs in sync with implementation changes
+- verify main session responsiveness
+- verify queue integrity
+- detect stalled workers
+- restart system if frozen
+- send Telegram alert
 
 ## 3. Execution Model
 

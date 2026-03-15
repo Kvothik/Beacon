@@ -2,78 +2,56 @@
 
 ## Purpose
 
-This document tracks the live Beacon execution queue for autonomous work.
+This document tracks the live BEACON execution queue supporting autonomous implementation.
 
-It is intentionally short.
-Detailed historical task breakdown should live in GitHub issues, not in this file.
+It is deliberately minimal. Historical breakdowns live in GitHub issues.
 
 ## Queue Rules
 
-- Only one implementation issue may be active at a time.
-- Work the highest valid backlog item unless a human reprioritizes.
-- Do not start the next issue if the current issue is blocked, unverified, or awaiting required acceptance.
-- Blocked issues remain open.
-- Do not invent undocumented endpoints, schema, packet sections, or PDF behavior.
-- Keep GitHub issue state, board state, and repo state aligned.
+- Single active implementation issue at a time unless human overrides.
+- Prioritize highest-value unblocked backlog item.
+- Do not start next issue if current is blocked, unverified, or awaiting acceptance.
+- Blocked issues remain open until resolved.
+- No inventing undocumented APIs, schemas, rules, or behaviors.
+- Maintain alignment of GitHub issue, board, and repository states.
 
 ## Completion Protocol
 
-Workers must report:
+Workers must structurally report completion via:
 - `DONE <task-id> success`
 - `BLOCKED <task-id> <reason>`
 
-Every completion report must include:
+Every report must include:
 - files changed
-- verification command run
+- verification command
 - verification result
-- final issue status
+- final task status
 
-## Current State
+## Current Board State
 
-Board snapshot:
-- Backlog: 7
-- In Progress: 0
-- Done/Accepted: 13
+Backlog: derived from GitHub
+In Progress: managed live
+Done/Accepted: managed live
 
-Recently completed:
-- #33 Maestro harness (Android passing, iOS blocked pending Xcode)
-- #39 workflow event logging
-- #41 attachment visibility
-- #42 scan quality / rescan guidance
-- #43 offender search filtering
-- #44 offender selection clarity
-- #45 packet builder progress indicators
-- #46 improved error handling
-- #48 packet readiness review
+## Queue Progression
 
-Current active issue:
-- none
+Sixx should auto-assign next valid task when:
+- current task verified complete
+- acceptance confirmed
+- no blockers or holds
 
-Next issue:
-- derive from current GitHub backlog analysis
+Queue progression halts on:
+- blockers
+- failed verification
+- failed edits
+- explicit human holds
+- tooling/runtime issues
 
-## Queue Progression Rule
+## Rehydration
 
-Sixx should automatically start the next valid issue when:
-- the current issue is complete
-- verification passed
-- required acceptance is confirmed
-- no blocker or human hold exists
-
-Queue progression stops on:
-- blocker
-- verification failure
-- edit failure
-- explicit human hold
-- missing runtime/tooling dependency
-
-## Rehydration Rule
-
-This file is part of the minimal rehydration surface.
-
-After compaction or reset, the system should recover from:
-- current board snapshot
-- active issue
-- blocked issue list
-- recent completed issues
-- durable worker handoff notes
+As part of minimal rehydration surface, system recovers after reset or compaction from:
+- board snapshot
+- active task
+- blocked task list
+- recent completed tasks
+- durable worker handoff

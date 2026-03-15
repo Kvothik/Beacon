@@ -24,11 +24,12 @@ Core rules:
 
 Current intended model policy:
 
-- Sixx -> cheap coordinator model
-- Sentinel -> cheap watchdog / QA model
-- Shepherd -> inactive / standby
-- Forge -> `gpt-5.3`
-- Atlas -> `gpt-5.3`
+- Sixx = orchestrator
+- Aegis = strategist / proposal engine
+- Forge = backend implementation
+- Atlas = frontend / mobile implementation
+- Sentinel = watchdog / QA
+- Pulse = runtime monitor
 
 Rules:
 - Sixx should not run all day on an expensive implementation model
@@ -38,10 +39,11 @@ Rules:
 ## 4. Agent Roles
 
 - Sixx = orchestrator, execution gateway, queue controller, and message router
+- Aegis = strategist and proposal creation
 - Forge = backend implementation agent
-- Atlas = mobile implementation agent
+- Atlas = frontend and mobile implementation agent
 - Sentinel = watchdog, QA, regression review, stall detection
-- Shepherd = inactive / standby unless explicitly re-enabled
+- Pulse = runtime monitor
 
 Sixx owns:
 - task selection
