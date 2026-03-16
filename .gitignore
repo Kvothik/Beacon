@@ -5,3 +5,21 @@ __pycache__
 .venv
 .expo
 *.log
+
+# Local runtime environment (never commit)
+.openclaw/
+runtime/
+orchestrator/
+workers/
+scripts/
+memory/
+_beacon_local/
+
+# Local dev artifacts
+AGENTS.md
+HEARTBEAT.md
+IDENTITY.md
+SOUL.md
+TOOLS.md
+USER.md
+integration_test_sixx.py
