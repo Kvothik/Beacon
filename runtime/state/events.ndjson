@@ -1,0 +1,2 @@
+{"event": "TASK_CREATED", "task_id": "phase4-event-test-1", "details": {"owner": "backend"}, "timestamp": "2026-03-16T02:05:54.613960"}
+{"event": "TASK_STATE_CHANGED", "task_id": "phase4-event-test-1", "old_state": "proposed", "new_state": "backlog", "timestamp": "2026-03-16T02:05:54.622343"}
