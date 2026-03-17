@@ -3,52 +3,53 @@
 ## Repository
 Kvothik/Beacon
 
-## GitHub Authentication
-- Use GitHub CLI or API with token having repo and project scopes
-- Verify with `gh auth status`
+## GitHub Authentication and API
+- Use GitHub CLI or API with a personal access token having repo and project scopes
 
 ## Project Board
-- Target GitHub Project: https://github.com/users/Kvothik/projects/1 (Project ID via GraphQL or CLI)
-- Columns correspond to runtime states:
-  - Backlog column for backlog tasks
-  - In Progress column for active tasks
-  - Verifying column for verifying tasks
-  - Done column for accepted tasks
-  - Blocked/Failed column for failed tasks
+- Use GitHub Project 1 at: https://github.com/users/Kvothik/projects/1
+- Map runtime task states to board columns as:
+  - backlog -> Backlog
+  - active -> In Progress
+  - verifying -> Verifying
+  - accepted -> Done
+  - failed -> Blocked/Failed
 
-## Commands
+## Automation Behavior
 
-### Create issue
+Hook automation into the runtime task lifecycle events:
+- On task approval, creation, activation, completion
+- For each approved task:
+  - Check for existing GitHub issue by task title
+  - If missing, create new GitHub issue with labels and assign correct owner
+  - Add issue to Project 1 and set initial column based on task state
+  - Update issue status on runtime state changes
+  - Comment or close issue on task completion
+
+## Command Examples
+
+Create issue:
 ```sh
-gh issue create --repo Kvothik/Beacon --title "<Task Title>" \
---body "<Task Description>" --label "backend,type:task,status:ready"
+gh issue create --repo Kvothik/Beacon --title "<Task Title>" --body "<Task Description>" --label "backend,type:task,status:ready"
 ```
 
-### Add issue to project board
-Project 1 ID and column IDs required.
+Add to project:
 ```sh
 gh project item add --project 1 --content-id <ISSUE_NODE_ID>
 ```
 
-### Set project board status
+Move in project:
 ```sh
 gh project item move --project-item <PROJECT_ITEM_ID> --column-id <COLUMN_ID>
 ```
 
-### Update issue status
+Update issue status:
 ```sh
 gh issue edit <ISSUE_NUMBER> --add-label "status:complete" --remove-label "status:ready"
 ```
 
-## Automation
-- Query runtime tasks in backlog or active state
-- Find corresponding GitHub issues by title
-- Create missing issues and add to board
-- Update board item status based on runtime state
+## Notes
 
-## Examples (runtime backlog tasks)
-- Create initial test suites (QA)
-- Improve project documentation (Architecture)
-- Implement missing document upload route (Backend)
-
----
+- Ensure environment variable GITHUB_TOKEN is set with appropriate scopes.
+- Existing issues should be reused to avoid duplicates.
+- Manual intervention needed if GitHub API access fails.
