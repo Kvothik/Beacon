@@ -49,42 +49,6 @@ No issue is complete until verification has run and confirmed:
 Before moving to the next issue, the active executor must:
 - commit changes
 - push changes
-
-This is only for keeping the Beacon repository code in sync.
-GitHub issues and boards are not part of execution.
-
-Execution source of truth:
- /Users/sixx/.openclaw/workspace/pentarch-runtime/planner/planner_tasks.json
-
-No other system (GitHub, docs, or boards) determines execution state.
-
-After each task return:
-- completed_task
-- current_task_status
-- next_task_from_queue
-- blocker_or_none
-
-
-## 8. Next Task Recommendation Rule
-
-After completing any task, the system must:
-1. Read the canonical task queue:
-   - `pentarch-runtime/planner/planner_tasks.json`
-2. Identify the next task in sequence or priority
-3. Recommend that next task explicitly in the report
-4. If no next task exists, report that the queue is empty
-
-## 9. Runtime Reporting Behavior
-
-After every task execution, the system output must include:
-- `current_task_completed`
-- `next_recommended_task_from_queue`
-- `github_issue_updated_yes_or_no`
-
-
-## 10. Repository Boundaries
-
-- Beacon is the only product repository
-- pentarch-runtime contains runtime, orchestrator only
-- NEVER write product code outside Beacon
-
+- comment on the GitHub issue with summary and verification
+- apply the correct status label
+- close the issue if complete

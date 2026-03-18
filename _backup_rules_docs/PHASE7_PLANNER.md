@@ -38,10 +38,10 @@ Planner outputs structured JSON tasks with the following structure:
 
 ## Planner Task Storage
 
-Planner tasks are stored only in:
-- `/Users/sixx/.openclaw/workspace/pentarch-runtime/planner/planner_tasks.json`
-
-
+Planner tasks are stored in:
+- `/Users/sixx/.openclaw/workspace/planner/planner_tasks.json`
+- `/Users/sixx/.openclaw/workspace/planner/ui_reviews/`
+- `/Users/sixx/.openclaw/workspace/planner/feature_proposals/`
 
 ## Screenshot Review Capability
 
@@ -96,5 +96,4 @@ Subsequently, Sixx dispatches workers normally to execute these tasks.
 
 ## Workflow Summary
 
-User → Screenshots → Planner → Structured Tasks → Planner Intake → Runtime Backlog → Worker Dispatch
-
+User  Screenshots  Planner  Structured Tasks  Planner Intake  Runtime Backlog  Worker Dispatch

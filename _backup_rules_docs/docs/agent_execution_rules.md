@@ -49,20 +49,9 @@ No issue is complete until verification has run and confirmed:
 Before moving to the next issue, the active executor must:
 - commit changes
 - push changes
-
-This is only for keeping the Beacon repository code in sync.
-GitHub issues and boards are not part of execution.
-
-Execution source of truth:
- /Users/sixx/.openclaw/workspace/pentarch-runtime/planner/planner_tasks.json
-
-No other system (GitHub, docs, or boards) determines execution state.
-
-After each task return:
-- completed_task
-- current_task_status
-- next_task_from_queue
-- blocker_or_none
+- comment on the GitHub issue with summary and verification
+- apply the correct status label
+- close the issue if complete
 
 
 ## 8. Next Task Recommendation Rule

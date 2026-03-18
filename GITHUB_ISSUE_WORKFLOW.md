@@ -35,7 +35,8 @@ gh issue create --repo Kvothik/Beacon --title "<Task Title>" --body "<Task Descr
 
 Add to project:
 ```sh
-gh project item add --project 1 --content-id <ISSUE_NODE_ID>
+# Use current gh CLI syntax (gh project item-add) or manual UI if CLI fails.
+# Project field/status updates may require manual UI due to CLI limitations.
 ```
 
 Move in project:

@@ -23,22 +23,7 @@ Agent model assignments:
 - After completing work for an issue, push the corresponding committed changes to GitHub before starting the next issue.
 - Sixx must not report an issue as fully completed to the user until the relevant commits have been pushed to the GitHub repository.
 - After completing work for a queued task or GitHub issue, update the corresponding GitHub issue/PR status and move the GitHub project/kanban card to the appropriate completion state before starting the next task.
-
-This is only for keeping the Beacon repository code in sync.
-GitHub issues and boards are not part of execution.
-
-Execution source of truth:
- /Users/sixx/.openclaw/workspace/pentarch-runtime/planner/planner_tasks.json
-
-No other system (GitHub, docs, or boards) determines execution state.
-
-After each task return:
-- completed_task
-- current_task_status
-- next_task_from_queue
-- blocker_or_none
-- docs/task_queue.md is historical only. The active execution queue is:
-  /Users/sixx/.openclaw/workspace/pentarch-runtime/planner/planner_tasks.json
+- On every completed story, update `docs/task_queue.md` so issue status and current execution state stay accurate before starting the next task.
 - If real-world data ambiguity exists, the agent may implement a `TEMP_RULE` to keep development moving only when the rule is clearly marked in code/docs as temporary and a follow-up GitHub issue is created for the real logic.
 - If a requested change conflicts with `system_invariants.md`, stop and ask.
 
