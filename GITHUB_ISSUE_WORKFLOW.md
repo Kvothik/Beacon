@@ -18,13 +18,9 @@ Kvothik/Beacon
 ## Automation Behavior
 
 Hook automation into the runtime task lifecycle events:
-- On task approval, creation, activation, completion
-- For each approved task:
-  - Check for existing GitHub issue by task title
-  - If missing, create new GitHub issue with labels and assign correct owner
-  - Add issue to Project 1 and set initial column based on task state
-  - Update issue status on runtime state changes
-  - Comment or close issue on task completion
+* GitHub issue and project board updates have been removed from the automation behavior.
+* Use current gh CLI syntax or manual UI to manage project fields and statuses.
+* Note: Project field/status updates may require manual UI due to CLI limitations.
 
 ## Command Examples
 

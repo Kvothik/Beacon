@@ -37,10 +37,17 @@ After each task return:
 - current_task_status
 - next_task_from_queue
 - blocker_or_none
+
+---
+# Beacon root allowlist policy enforced
+# Pushes from Beacon will be rejected if root contents are outside allowlist:
+# README.md, .gitignore, backend, mobile, infra, datasets, docs, repo_map.md, run-maestro.sh, run-maestro-ios.sh, run-maestro-android.sh
+
 - docs/task_queue.md is historical only. The active execution queue is:
   /Users/sixx/.openclaw/workspace/pentarch-runtime/planner/planner_tasks.json
 - If real-world data ambiguity exists, the agent may implement a `TEMP_RULE` to keep development moving only when the rule is clearly marked in code/docs as temporary and a follow-up GitHub issue is created for the real logic.
 - If a requested change conflicts with `system_invariants.md`, stop and ask.
+
 
 ## 3. Required Build Order
 

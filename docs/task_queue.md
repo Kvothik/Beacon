@@ -11,7 +11,7 @@ It is ordered for MVP-first delivery, keeps P0 separate from later work, and is 
 
 - Work from top to bottom unless a human explicitly reprioritizes.
 - Keep only one implementation task actively in progress at a time.
-- Do not start P1 or P2 work until P0 is complete or explicitly reprioritized.
+
 - If a task would require inventing an endpoint, schema, packet section, or PDF behavior, stop and update docs first.
 - If file structure changes, update `docs/repo_map.md` in the same change set.
 - When a queued task is completed, update the corresponding GitHub issue/PR, move the GitHub project/kanban item to its completion state, and update repository tracking docs so the completed status is visible from repo context.
@@ -685,7 +685,9 @@ Issue shape:
 - qa
 - acceptance
 
-## 4. Later Work (Blocked Until P0 Completion)
+## 4. Deprecated: Pre-Phase 9 Milestones
+
+This milestone system is historical and no longer governs active execution or prioritization.
 
 ### P1
 - push notification subscription endpoint and delivery wiring
