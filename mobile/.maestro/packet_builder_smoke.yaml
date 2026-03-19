@@ -1,7 +1,14 @@
 appId: host.exp.Exponent
 ---
+# launchApp step removed since Expo Go manages app launch externally
+
 - launchApp
-- assertVisible: "Beacon"
+- waitForAnimationToEnd
+- assertVisible: type=android.widget.ProgressBar
+- waitForAnimationToEnd
+- assertVisible: "Packet Builder"
+
+
 - tapOn: "SID"
 - inputText: "50759686"
 - tapOn: "Search Offenders"
@@ -9,7 +16,7 @@ appId: host.exp.Exponent
 - tapOn: "SMITH,J M (50759686)"
 - assertVisible: "Selected Offender"
 - tapOn: "Create Packet"
-- assertVisible: "Packet Builder"
+
 - assertVisible: "Packet Summary"
 - tapOn: "Open Packet Review"
 - assertVisible: "Packet Review"

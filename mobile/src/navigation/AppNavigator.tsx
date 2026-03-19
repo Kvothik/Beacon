@@ -48,14 +48,28 @@ export default function AppNavigator() {
   const { isHydrated, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    authService.hydrateSession().catch(() => {
-      // keep auth bootstrap deterministic even if persistence is unavailable
-    });
+    console.log('[AppNavigator] hydrateSession start');
+    authService.hydrateSession()
+      .then(() => {
+        console.log('[AppNavigator] hydrateSession success');
+      })
+      .catch(() => {
+        console.log('[AppNavigator] hydrateSession failure');
+        // keep auth bootstrap deterministic even if persistence is unavailable
+      })
+      .finally(() => {
+        console.log('[AppNavigator] hydrateSession finally');
+      });
   }, []);
 
+  console.log(`[AppNavigator] isHydrated: ${isHydrated}`);
+
   if (!isHydrated) {
+    console.log('[AppNavigator] Waiting for hydration');
     return <AuthBootstrap />;
   }
+
+  console.log('[AppNavigator] Hydration complete, rendering app');
 
   return (
     <NavigationContainer theme={theme}>

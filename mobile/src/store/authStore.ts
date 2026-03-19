@@ -43,14 +43,19 @@ export const authStore = {
       return;
     }
 
-    const storedSession = await AsyncStorage.getItem(AUTH_SESSION_STORAGE_KEY);
-    if (!storedSession) {
-      setState({ isHydrated: true, isAuthenticated: false, session: null });
-      return;
-    }
+    try {
+      const storedSession = await AsyncStorage.getItem(AUTH_SESSION_STORAGE_KEY);
+      if (!storedSession) {
+        setState({ isHydrated: true, isAuthenticated: false, session: null });
+        return;
+      }
 
-    const session = JSON.parse(storedSession) as AuthSession;
-    setState({ isHydrated: true, isAuthenticated: true, session });
+      const session = JSON.parse(storedSession) as AuthSession;
+      setState({ isHydrated: true, isAuthenticated: true, session });
+    } catch (error) {
+      // Safely handle errors during hydration
+      setState({ isHydrated: true, isAuthenticated: false, session: null });
+    }
   },
 
   async setSession(session: AuthSession) {
