@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, View, Text } from 'react-native';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -40,36 +40,45 @@ function AuthBootstrap() {
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <ActivityIndicator size="large" color="#111827" />
+      <Text>Loading Splash Screen (Autonomous Debug)</Text>
     </View>
   );
 }
 
-export default function AppNavigator() {
-  const { isHydrated, isAuthenticated } = useAuthStore();
+export default function BeaconNavigator() {
+  const { isHydrated, isAuthenticated, session } = useAuthStore();
+  const [hydrationTimedOut, setHydrationTimedOut] = useState(false);
 
   useEffect(() => {
-    console.log('[AppNavigator] hydrateSession start');
-    authService.hydrateSession()
-      .then(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    async function doHydrate() {
+      console.log('[AppNavigator] hydrateSession start');
+      try {
+        await authService.hydrateSession();
         console.log('[AppNavigator] hydrateSession success');
-      })
-      .catch(() => {
-        console.log('[AppNavigator] hydrateSession failure');
-        // keep auth bootstrap deterministic even if persistence is unavailable
-      })
-      .finally(() => {
+      } catch (e) {
+        console.log('[AppNavigator] hydrateSession failure', e);
+      } finally {
         console.log('[AppNavigator] hydrateSession finally');
-      });
+        clearTimeout(timeoutId);
+      }
+    }
+
+    doHydrate();
+
+    timeoutId = setTimeout(() => {
+      console.log('[AppNavigator] Hydration timeout');
+      setHydrationTimedOut(true);
+    }, 10000); // 10 seconds timeout
   }, []);
 
-  console.log(`[AppNavigator] isHydrated: ${isHydrated}`);
+  console.log(`[AppNavigator] isHydrated: ${isHydrated} hydrationTimedOut: ${hydrationTimedOut} isAuthenticated: ${isAuthenticated} session: ${session}`);
 
-  if (!isHydrated) {
+  if (!isHydrated && !hydrationTimedOut) {
     console.log('[AppNavigator] Waiting for hydration');
     return <AuthBootstrap />;
   }
-
-  console.log('[AppNavigator] Hydration complete, rendering app');
 
   return (
     <NavigationContainer theme={theme}>

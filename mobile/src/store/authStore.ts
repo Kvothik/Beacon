@@ -39,7 +39,9 @@ export const authStore = {
   },
 
   async hydrate() {
+    console.log('[authStore] hydrate start');
     if (state.isHydrated) {
+      console.log('[authStore] already hydrated');
       return;
     }
 
@@ -47,14 +49,18 @@ export const authStore = {
       const storedSession = await AsyncStorage.getItem(AUTH_SESSION_STORAGE_KEY);
       if (!storedSession) {
         setState({ isHydrated: true, isAuthenticated: false, session: null });
+        console.log('[authStore] no stored session');
         return;
       }
 
       const session = JSON.parse(storedSession) as AuthSession;
       setState({ isHydrated: true, isAuthenticated: true, session });
+      console.log('[authStore] session restored');
     } catch (error) {
-      // Safely handle errors during hydration
+      console.log('[authStore] hydrate error:', error);
       setState({ isHydrated: true, isAuthenticated: false, session: null });
+    } finally {
+      console.log('[authStore] hydrate finally');
     }
   },
 
@@ -76,3 +82,9 @@ export function getAuthSession(): AuthSession | null {
 export function useAuthStore(): AuthStoreState {
   return useSyncExternalStore(authStore.subscribe, authStore.getState, authStore.getState);
 }
+
+// Temporary logging for hydration debugging
+console.log('[authStore] Initial state:', state);
+authStore.subscribe(() => {
+  console.log('[authStore] State change:', authStore.getState());
+});
